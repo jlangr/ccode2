@@ -1,0 +1,47 @@
+// [HoldingController]->[HoldingService]
+// [HoldingController||/checkout;/checkin]
+
+[BranchController]->[BranchService]
+
+[BranchController||add;retrieveAll]
+
+[HoldingService]->[BranchService]
+[HoldingService]->[PatronService]
+[HoldingService]->[Holding] 
+[HoldingService]->[Patron]
+[HoldingService]->[ClassificationApi]
+[HoldingService]->[Catalog]
+
+[Catalog||add;find]
+
+[HoldingService||add;checkOut;checkIn;retrieve;find;isAvailable;transfer;dateDue]
+
+[BranchService]->[Branch]
+
+[BranchService||find;allBranches;add]
+
+[Branch]
+
+[PatronService||add;find;allPatrons;]
+
+[PatronService]->[Patron]
+
+[Holding|barcode;dateCheckedOut;dateLastCheckedIn;branch|isAvailable;checkOut;checkIn;transfer;daysLate]
+
+[Holding]->[Material]
+
+[Material]
+
+[ClassificationApi||retrieveMaterial:classification]
+
+[Patron|holdings|remove: Holding]
+
+[Patron]->[Holding]
+
+[Holding]->[Branch]
+
+//[HoldingService]->[PatronStore]
+//[PatronService]->[PatronStore]
+//[PatronStore]->[Patron]
+//[PatronStore||find;addHoldingToPatron]
+

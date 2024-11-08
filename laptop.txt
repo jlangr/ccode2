@@ -1,0 +1,120 @@
+In chapter [x], you learned how to best organize code statements and expressions in the form of functions or methods. [[ READ ]]
+
+Hopefully you picked up these two important ideas:
+
+* Functions provide a way to declare, invoke, and reuse pieces of logical behavior, or *concepts*.
+* Rather than aggregating multiple behavioral concepts into a single function, you're much better off if you compose methods that capture small, discrete concepts.
+
+In this chapter, you'll hear echoes of the advice from chapter [x] as applied to classes or modules--the next-higher organizational layer.
+
+Let's first tackle a few mostly cut 'n' dry mechanics of clean class design. We'll then move on to the meatier discussions: just what behaviors should be 
+
+## Classes and Modules vs. Files
+
+Your programming language allows you to group concepts into a single construct--a *class*, if you're coding with an object-oriented language, or perhaps a *module* if you program in a primarily functional language like JavaScript, Elixir, or F#.
+
+In some object-oriented languages, such as Java, a file can declare only a single, publicly available class. Other languages, such as C++, TypeScript, and Ruby, allow you to declare multiple classes within a single file.
+
+To make matters more confusing, some languages (both OO and functional) allow you to declare *namespaces*. These can help you avoid name clashes across a larger system. They can also help you organize related concepts. For our purposes, consider that the primary use of a namespace is to group related concepts.
+
+Most functional languages--for example, Clojure, Elixir, and Haskell--allow you to organize functions into multiple, separate modules within a file. Even for languages that don't directly support modules/namespaces within the language (JavaScript comes to mind), you can organize multiple "virtual" modules within a single source file.
+
+Just because you can doesn't mean you should. *Generally*, stick to a single module or class per source file. You'll create fewer headaches for you and your dev team.
+
+Everything is a tradeoff in software development, of course, and thus exceptions always exist. You might find it useful to declare other very closely-related classes within the same sourcefile, such as small structs (e.g. `record`s in Java) or exception types. Perhaps they are consumed only by other types within the same file, or they always appear in client code that also involves the file's primary type.
+
+(All of this, of course, means little to those devious Smalltalk programmers, who have the audicity to not even use files when it comes to organizing code.)
+
+But, yeah, for the most part: class <=> file, or module <=> file (or whatever we're calling things). Consider the file part of things mostly not relevant in our discussions this chapter. We're going to focus instead about how to properly group `concepts` in classes and modules. For the most part, the considerations are going to be the same.
+
+[[ FUNCTIONS and "type"?? ]]
+
+
+[[ SOLID - post agile ]]
+
+## What *Should* a Class Contain
+
+If your eyes glazed over at the last section, just remember: one class per file. If you work in a functional-ish language, wash your eyes out, read the prior section, come back, and remember as you read on that approrpriate design of "classes" still applies in your functional world. [[ Need WHY throughout ]]
+
+You could conceivably lump together your system's entire set of methods into a single class. You could, similarly perversely, create a separate class for each and every method. Both are outrageous ideas, though I've done the former for very small systems, and perhaps some Smalltalkers have tried the second.
+
+Classes provide ways to help you keep your sanity as your system grows. Without sensible organization, you will:
+
+* have a harder time finding the code you're looking for
+* bloat your system with considerable redundancy; doubling it in size is easily in range
+* create defects around inconsistent behaviors, due to the redundancies
+* create defects due to increasing complexity (...)
+* spend lots more time writing automated tests for it, for myriad reasons
+* ...
+
+All those outcomes increase in likelihood with growth, and all will dramatically (?) increase your costs and frustrations.
+
+##
+
+"good" and "bad" (reference Tim /Jeff's article here)
+
+
+[[ COHESION, COUPLING ]]
+Heuristics help you identify the steps to take, and also the steps to avoid, to arrive at well-designed classes:
+
+- Positive heuristics: Steps to take. Kent Beck's four rules of emergent design[[ref]], for example, tell you to ensure that all code is testable as you go, to eliminate logical redundancies, to ensure all programmatic elements are clearly and concisely named, and to minimize overdesign.
+- Negative heuristics: Steps to avoid. anti-patterns--that describe bad outcomes to look for or bad paths to take while developing code. And finally, you 
+
+Characteristics help you identify the current quality of your classes
+
+- Posistive characteristics: Bob Martin's collection of five class design principles ... 
+- Negative characteristics: (problematic design) Martin Fowler's code smells[[ref]] provide descriptive names for things to avoid in code. *Shotgun surgery*, for exampe that, requires you to shoot holes in numerous classes in order to effective change.
+
+Note that these often describe design at the method (micro design) level, as well as at the class (macro design) level and above.
+
+Some of these design concepts overlap between being "characteristics" vs. being "heuristics." ...
+
+For much of this chapter, we'll focus on the *characteristics* of an ideally-sized class, because the idea is that you can glean them from looking at the code. Such a class is typically small, its name concisely summarizes the small numbers of behaviors gathered within, and it is defined cohesively [[define]]. As a result, the class exhibits the single-responsibility principle (SRP): It has one reason to change. 
+
+[[ example here ]]
+
+[[ ALSO: what about static code analysis ]]
+
+## Context Matters
+
+Our programming history has seemed a pendulum: Early on, we got code to work, with little consideration for how it was structured. We moved on to increasingly heavy structure, plus increasingly heavy speculative planning about how that structure should be designed. We went too far.
+
+The pendulum swung back to a ... less planning ... agile
+
+Agile says "the things we have in common, unfortunately, don't really have much to say about design."
+
+XP said "we want to incrementally iterative to produce a quality design, using controls such as TDD and other quality controls such as pair programming."
+We used to draw design sketches using our knowledge of UML etc. -- what fowler calls inception phase design.
+
+The pendulum started falling off the hook, unfortunately, c. 2010. As demand for programming grew, web searches and the need for quick answers overtook principled, conceptual, and comprehensive learning. Dramatically increasing numbers of developers read less and knew less.
+
+The notion that you could sprint and slap out software each month suggested that perhaps -- see next. Couple these ideas.
+XP and agile became "we don't have to worry about design."
+
+Now with AI: You might not have to "think" at all. Except--where are we at? We can't trust the code that an LLM generates. We can write tests. We can't put the whole system in context...  yet. Meanwhile: Pluggable designs. Pipeline, strategy, command, etc.
+
+In the past few years, it became chic to dismiss those aforementioned time-tested concepts... SOLID etc. Except, they all said the same thing, and for the most part, these are the ways we manage complexity in systems and keep ourselves sane.
+
+IOW: You might say "everything in SOLID is wrong." Technically, you'd be right--but only in a likely small number of contexts and for a peculiar definition of "wrong."
+
+Another way to phrase this cynical take is to suggest that everything is wrong; it's just a matter of degree. All estimates are wrong, for example; it's just a matter of degree--weeks, days, minutes, hours, seconds. 
+
+The better mindset suggests that, most of the time, the principles we've learned will help you develop software more easily.
+
+## Design Is a Continuum
+
+Our system's design is the collection of every choice we made--in the statements we coded, the methods, and the classes. (Hopefully we make these choices consciously, but invariably we make choices that add behavioral or operational nuances we aren't aware of, which can create problems.)
+
+As we code, we actively work to organize the code so that effects the behaviors we need, but also so that we can continue to add more behaviors. With each step, the code's design changes--perhaps in a small manner, but sometimes in a large way.
+
+Design is a continuum. As we build our system, we want to consider its design at every possible step, to ensure we're not increasing our effort in maintaining the code. The primary thing we're going to assess is its class structure, which can tell us what and where key behaviors are, and how they relate to each other.
+
+Here's an example
+
+Yes, we're going to show you 
+
+
+## How We Get There: The Birth of a New Class
+
+
+
