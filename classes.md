@@ -61,16 +61,10 @@ John von Neumann and Herman Goldstine's article, "Planning and Coding of Problem
 
 Pioneers Maurice Wilkes and David Wheeler were inspired by ideas found in the seminal article, and implemented the concept of subroutines in the EDSAC computer in 1951. In short, they believed that code modularization brought about by subroutines would lead to less costly software development. They didn't wait for research (though it did come, slowly, across later decades).
 
-Since, we extrapolated the claimed value of modularization, originally brought about in the form of subroutines, to larger contexts. We learned to organize collections of subroutines&mdash;functions or methods&mdash;into modules or classes. That in turn presented new challenges around the composition of such modules and classes, as well as the interrationships (dependencies) between them. We began to derive various heuristics to guide other developers.
+Since, we extrapolated the claimed value of modularization, originally brought about in the form of subroutines, to larger contexts. We learned to organize collections of subroutines&mdash;functions or methods&mdash;into modules or classes. That in turn presented new challenges around the composition of such modules and classes, as well as the interrelationships (dependencies) between them. We began to derive various heuristics to guide other developers.
 
 [[ mention coupling / cohesion here? ]]
 
-[reference](https://cacm.acm.org/opinion/in-praise-of-wilkes-wheeler-and-gill/)
-
-Goldstine, H.G. and von Neumann, J. Planning and Coding of Problems for an Electronic Computing Instrument, 1947&mdash;1948.
-https://www.ias.edu/sites/default/files/library/pdfs/ecp/planningcodingof0103inst.pdf
-
-Wilkes, M.V., Wheeler, D.J., and Gill, S. The Preparation of Programs for an Electronic Digital Computer, Addison-Wesley, 1951.
 
 ## Heuristics and Characteristics
 
@@ -119,23 +113,21 @@ Each of the behaviors adheres to some *policy*--a set of rules established by th
 
 Policies do change, and it's possible that the policy for check-outs might need to change exclusively from the policy for check-ins. That in turn suggests that you should implement each of the policies in its own class: CheckOutService, CheckInService, and so on. At that point, the only job of the HoldingService is sheer delegation: the
 
-While the SRP tells us to be picky, it also doesn't tell us to speculate about the nexus of change.
+While the SRP tells us to be picky, it also doesn't tell us to speculate about the nexus of change. Your systems probably rampantly violate the SRP. Rather than go find code to change, wait for the next demand for change and ensure you take that opportunity to shape your system to be more compliant.
 
-For now, assume that library policies are stable. When change occurs, we'll deal with it&mdash;see [ref].
+**principle: Design flows from need.**
 
-Many service classes must orchestrate numerous disparate behaviors. They must interact with business logic regarding various domains (holdings, patrons, branches), they might persist or retrieve data, and they might interact with external services. The HoldingServiceClass is one example of an orchestrating class.
+## Code Policies ?
 
-Some smaller services, such as a collection of behaviors concerned with date calculations, might have minimal orchestration needs.
+For now, let's assume that the core library policies for check-in and check-out are stable. When change occurs, we'll deal with it&mdash;see [ref]. 
 
-A well-defined SRP-compliant service, as such, should either:
+It's easy to think of multiple reasons for the as-defined HoldingService to potentially change. For example, the library now wants patrons to rent DVDs for a longer period&mfash;14 days instead of 7&mdash;because they're an older technology and in low demand nowadays. But is that a problem for HoldingService as currently implemented?
 
-* contain *only* orchestration logic that declares policy and delegates to other classes for implementation specifics
-* contain only implementation specifics for related domain or utility behaviors
+We can't spot all reasons to change by looking at UML alone. 
 
-In other words, don't mix policy with implementation detail. It's not SRP compliant, and costlier to understand, navigate, and maintain.
+The interface of a class only tells you about the behaviors it directly publicizes. To understand fully the extent to which a class violates the SRP, you have to open up the source file and peruse the code. It doesn't take long to spot more reasons why a class might need to change.
 
-
-It's easy to think of multiple reasons for the as-defined HoldingService to potentially change. For example, DVDs are now rentable for 14 days instead of 7 (because they're an older technology and in low demand nowadays). But is that a problem for HoldingService as currently implemented? Here's the `dateDue` method:
+Here's the `dateDue` method:
 
 ```
 public Date dateDue(String barCode) {
@@ -146,26 +138,13 @@ public Date dateDue(String barCode) {
 }
 ```
 
-Ahh, very nice. The service delegates responsibility to the Holding class, where its `dateDue` method presumably covers all the calculation details, which likely change based on material type. The Holding class (or perhaps another class it depends on) absorbs such changes; the HoldingService class is isolated from them.
+Ahh, very nice. The service delegates responsibility to the Holding class, where its `dateDue` method presumably covers all the calculation details. The Holding class (or perhaps another class it depends on) absorbs such changes. The HoldingService class is isolated from them.
 
-The only change in the code related to `dateDue` that would seem to count as an additional reason to change, then, would be if the library did away with the notion of `dueDate` entirely. Still, removing a responsibility--or adding a new one--technically counts toward the number of reasons for a class to change.
-
-A class always has two facets: an interface that declares the behaviors it supports, and a set of implementation specifics that provide the logic for those behaviors. Some languages, like Java or C#, provide direct means to declare the interface separately as a purely abstract concept. Regardless, the idea exists ... xxx
-
-The abstract concept of an interface--a set of functions and the arguments required for each--still always has two reasons to change: It needs to support or stop supporting behaviors, or how clients interfaces with those behaviors (function arguments and return values) changes.
-
-The interface segregation principle (ISP) states that "a client should not be forced to implement interfaces it does not use." That's stating a principle in terms of the potential negative impact if ignored--a changing interface requires clients to expend effort to accommodate the change (minimally, by ensuring none of their interests have broken). But another way to look at the ISP is that it's a restatement of the SRP: An interface should have one reason to change.
-
-Taken to its extreme, the SRP pushes
-
-The simple answer is: delegate! If a behavior has any real complexity, consider moving it into another class.
-
-An ideally-defined SRP compliant class should be an entry point into a series of behaviors, each delegating to another class that implements the gory details.
+The support for `dateDue` itself is a responability that could disappear (some libraries have done it). If and when that occurs, we'll look to shield HoldingService from similar, subsequent changes.
 
 ## Where Reasons to Change Hide
 
-The interface of a class only tells you about the behaviors it directly publicizes. To understand fully the extent to which a class violates the SRP, you have to open up the source file and peruse the code. It doesn't take long before you're spotting additional reasons why the class might need to change.
-
+[intro sentence]
 The HoldingService method `checkIn` does a pretty good job of declaring the policy for returning materials:
 
 ```
@@ -260,6 +239,33 @@ The `checkIn` method isn't perfect yet. But replacing unnecessary detail with ab
 
 ## When Policies Change
 
+Many service classes must orchestrate numerous disparate behaviors. They must interact with business logic regarding various domains (holdings, patrons, branches), they might persist or retrieve data, and they might interact with external services. The HoldingServiceClass is one example of an orchestrating class.
+
+Some smaller services, such as a collection of behaviors concerned with date calculations, might have minimal orchestration needs.
+
+A well-defined SRP-compliant service, as such, should either:
+
+* contain *only* orchestration logic that declares policy and delegates to other classes for implementation specifics
+* contain only implementation specifics for related domain or utility behaviors
+
+In other words, don't mix policy with implementation detail. It's not SRP compliant, and costlier to understand, navigate, and maintain.
+
+---
+
+
+A class always has two facets: an interface that declares the behaviors it supports, and a set of implementation specifics that provide the logic for those behaviors. Some languages, like Java or C#, provide direct means to declare the interface separately as a purely abstract concept. Regardless, the idea exists ... xxx
+
+The abstract concept of an interface--a set of functions and the arguments required for each--still always has two reasons to change: It needs to support or stop supporting behaviors, or how clients interfaces with those behaviors (function arguments and return values) changes.
+
+The interface segregation principle (ISP) states that "a client should not be forced to implement interfaces it does not use." That's stating a principle in terms of the potential negative impact if ignored--a changing interface requires clients to expend effort to accommodate the change (minimally, by ensuring none of their interests have broken). But another way to look at the ISP is that it's a restatement of the SRP: An interface should have one reason to change.
+
+Taken to its extreme, the SRP pushes
+
+The simple answer is: delegate! If a behavior has any real complexity, consider moving it into another class.
+
+An ideally-defined SRP compliant class should be an entry point into a series of behaviors, each delegating to another class that implements the gory details.
+
+
 
 ## Method Design vs. Class Design
 
@@ -272,43 +278,6 @@ We can choose to follow the guidance of SOLID, code smells, emergent design rule
 
 (Never mind that measuring some of these characteristics might be near impossible. How, for example, do you compare the size of one feature to another?)  [[ maybe reference Capers Jones, "Programming Productivity"? or something from Brooks, "no silver bullet"? ]])
 
-```
-[HoldingController]->[HoldingService]
-
-[HoldingService]->[BranchService]
-[HoldingService]->[PatronService]
-[HoldingService]->[Holding]
-[HoldingService]->[Patron]
-[HoldingService]->[PatronStore]
-[HoldingService]->[ClassificationApi]
-[HoldingService]->[Catalog]
-
-[Catalog||add;find]
-
-[HoldingService||add;checkOut;checkIn;retrieve;find;isAvailable;transfer;dateDue]
-
-[BranchService||find;]
-
-[PatronService||allPatrons;]
-
-[PatronService]->[Patron]
-
-[PatronStore||find;addHoldingToPatron]
-
-[Holding|barcode;dateCheckedOut;dateLastCheckedIn;branch|isAvailable;checkOut;checkIn;transfer;daysLate]
-
-[Holding]->[Material]
-
-[Material]
-
-[ClassificationApi||retrieveMaterial:classification]
-
-[Patron|holdings|remove: Holding]
-
-[Patron]->[Holding]
-
-[Holding]->[Branch]
-```
 
 ## Context Matters
 
@@ -339,3 +308,11 @@ The better mindset suggests that, most of the time, the principles we've learned
 
 [[ ALSO: what about static code analysis ]]
 
+## References
+
+[In Praise of Wilkes Wheeler and Gill](https://cacm.acm.org/opinion/in-praise-of-wilkes-wheeler-and-gill/)
+
+Goldstine, H.G. and von Neumann, J. Planning and Coding of Problems for an Electronic Computing Instrument, 1947&mdash;1948.
+https://www.ias.edu/sites/default/files/library/pdfs/ecp/planningcodingof0103inst.pdf
+
+Wilkes, M.V., Wheeler, D.J., and Gill, S. The Preparation of Programs for an Electronic Digital Computer, Addison-Wesley, 1951.
