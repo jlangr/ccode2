@@ -205,14 +205,17 @@ The silly line-level comments that describe the current statement ("is it late")
 
 Once isolated, the `isLate` method clearly demonstrates a code smell known as *feature envy*: The method is apparently envious of the `Holding` class, and asks it multiple questions ("What's the date checked in? What's the date due?") in order to compute the method's result. It also asks no questions of the containing class HoldingService. We can eliminate the envy by moving the method to the Holding class, where it can talk directly to its new peers:
 
-   public int checkIn(String barCode, Date date, String branchScanCode) {
+   public class HoldingService {
       // ...
+      public int checkIn(String barCode, Date date, String branchScanCode) {
+         // ...
 
-      if (holding.isLate()) {
-         foundPatron.addFine(calculateLateFine(holding));
-         return holding.daysLate();
+         if (holding.isLate()) {
+            foundPatron.addFine(calculateLateFine(holding));
+            return holding.daysLate();
+         }
+         return 0;
       }
-      return 0;
    }
 
     public class Holding {

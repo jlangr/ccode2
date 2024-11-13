@@ -32,7 +32,7 @@ But, yeah, for the most part: class <=> file, or module <=> file, or whatever. C
 
 ## What *Should* a Class Contain
 
-You could conceivably lump together your system's entire set of methods into a single class. You could, similarly perversely, create a separate class for each and every method. Both are outrageous ideas, though I've done the former for very small systems, and perhaps the second isn't so outrageous for some Smalltalkers.
+You could conceivably lump together your system's entire set of methods into a single class&mdash;a monolith. You could, similarly perversely, create a separate class for each and every method. Both are outrageous ideas, though I've done the former for very small systems, and perhaps the second isn't so outrageous for some Smalltalkers.
 
 Classes provide ways to help you keep your sanity as your system grows. Without sensible organization, you will:
 
@@ -101,29 +101,42 @@ Let's depict that HoldingService interface as a picture (because we'll be lookin
 
 ![HoldingService](./images/holdingservice.png "HoldingService")
 
-The method parameters aren't usually interesting when we start looking at class level design. We've omitted them here and later, unless they're interesting or necessary.
+The method parameters aren't usually interesting when we start looking at class level design. We'll omit them until they become useful.
 
 Our picture shows that the HoldingService allows holdings to be added to the system, to be checked out or checked in, and transferred from one library location (*branch*) to another. The HoldingService also supports a few queries, including the ability to retrieve holding details, to answer whether it's available for a patron to borrow ("check out"), and to determine when the material must be returned.
 
-The picture suggests that the core (single?) responsibility of the HoldingService is to manage the disposition of holdings. Each of the behaviors depicted directly support that interest.
+The picture suggests that the core (single?) responsibility of the HoldingService is to manage the disposition of holdings. Each of the behaviors depicted directly supports that interest.
 
-The Single Responsibility Principle (SRP) tells us to be a bit more picky, however: An SRP-compliant class should have only one reason to change.
+The Single Responsibility Principle (SRP) tells us to be a bit more picky, however: An SRP-compliant class should have only one reason to change. It's the opposite of a monolith, in which every single change requires updating the sole class in the system.
 
-Each of the behaviors adheres to some *policy*--a set of rules established by the library system and implemented in the code. The `dateDue` behavior, for example, specifies that books are due 21 days after they are checked out and that DVDs are due 7 days after checkout. The `checkIn` behavior similarly implements a policy: when a book is returned ("checked in"), books are marked as available, and patrons are assessed a fine if the book is returned after its due date. The fine amount varies depending on the material type and other possible factors.
+Why might a single-responsibility class be desirable?
 
-Policies do change, and it's possible that the policy for check-outs might need to change exclusively from the policy for check-ins. That in turn suggests that you should implement each of the policies in its own class: CheckOutService, CheckInService, and so on. At that point, the only job of the HoldingService is sheer delegation: the
+* Its name can concisely reflect the behaviors contained within, making those behaviors easier to locate
+* It creates real possibilities for re-use
+* Its likelihood of adhering to  and thus being closed to future changes increases (see the open-closed principle&mdash;OCP)
+* It's easier to test 
+* It makes your system more flexible
+* ... 
 
-While the SRP tells us to be picky, it also doesn't tell us to speculate about the nexus of change. Your systems probably rampantly violate the SRP. Rather than go find code to change, wait for the next demand for change and ensure you take that opportunity to shape your system to be more compliant.
+Each of the behaviors in HoldingService implements a *policy*--a set of rules established by the library system and implemented in the code. The `dateDue` policy, for example, specifies that books are due 21 days after they are checked out and that DVDs are due 7 days after checkout.
+
+The `checkIn` policy is more involved: When a book is returned ("checked in"), it is marked as available for other patrons to check out. The patron returning the book is assessed a fine for late returns, i.e. when a material is returned after its due date. The fine amount varies depending on the material type and other possible factors.
+
+Policies do change, and it's possible that the policy for check-outs might need to change exclusively from the policy for check-ins. Such independent variance suggests implementing each of the policies in its own class&mdash;CheckOutService, CheckInService, etc.&mdash;at least if you want to be SRP compliant. At that point, the only job of the HoldingService would be as a consolidated interface for holdings interests that delegated to other objects to do the work.
+
+ASIDE: Creating new classes is surprisingly easy in an IDE, yet we often resist as developers. While we probably don't want the "ravioli" system where *every* class contains only one method, there's nothing wrong with tiny classes containing three, two, or one method.
+
+[ reword ] While the SRP tells us to be picky, it also doesn't tell us to speculate about the nexus of change. Your systems probably rampantly violate the SRP. Rather than go find code to change, wait for the next demand for change and ensure you take that opportunity to shape your system to be more compliant.
 
 **principle: Design flows from need.**
 
 ## Code Policies ?
 
-For now, let's assume that the core library policies for check-in and check-out are stable. When change occurs, we'll deal with it&mdash;see [ref]. 
+For now, let's assume that the core library policies for check-in and check-out are stable. When change occurs, we'll deal with it&mdash;see [ref later in this chapter]. 
 
 It's easy to think of multiple reasons for the as-defined HoldingService to potentially change. For example, the library now wants patrons to rent DVDs for a longer period&mfash;14 days instead of 7&mdash;because they're an older technology and in low demand nowadays. But is that a problem for HoldingService as currently implemented?
 
-We can't spot all reasons to change by looking at UML alone. 
+While looking at sketches can be very helpful, we can't spot all change reasons by looking at UML alone. 
 
 The interface of a class only tells you about the behaviors it directly publicizes. To understand fully the extent to which a class violates the SRP, you have to open up the source file and peruse the code. It doesn't take long to spot more reasons why a class might need to change.
 
@@ -140,7 +153,7 @@ public Date dateDue(String barCode) {
 
 Ahh, very nice. The service delegates responsibility to the Holding class, where its `dateDue` method presumably covers all the calculation details. The Holding class (or perhaps another class it depends on) absorbs such changes. The HoldingService class is isolated from them.
 
-The support for `dateDue` itself is a responability that could disappear (some libraries have done it). If and when that occurs, we'll look to shield HoldingService from similar, subsequent changes.
+The support for `dateDue` itself is a responsibility that could disappear (some libraries have done it). If and when that occurs, we'll look to shield HoldingService from similar, subsequent changes.
 
 ## Where Reasons to Change Hide
 
@@ -167,17 +180,17 @@ public int checkIn(String barCode, Date date, String branchScanCode) {
 }
 ```
 
-Some of the `checkIn` method might be abstracted a little more, but one line of glaring implementation detail stands out as a potential problem: the `if` statement that determines whether the check-in is late:
+The `checkIn` method still begs a bit of cleanup. One line of glaring implementation detail stands out as a potential problem: the `if` statement that determines whether the check-in is late:
 
 ```
 if (holding.dateLastCheckedIn().after(holding.dateDue())) { // is it late?
 ```
 
-That conditional represents one possible policy: A holding is late if it's returned after the date due.
+That conditional represents a policy decision: A holding is late if it's returned after the date due.
 
-However, it's possible that the policy is considerably more complex. A book might not be late if borrowed by certain patrons, or if returned within a certain grace period. As a result, that seemingly innocuous single line of code adds another reason for HoldingService to change.
+However, it's possible that the policy is considerably more complex. A book might not be late if borrowed by VIPs (very important patrons), or if returned within a certain grace period. As a result, that seemingly innocuous single line of code adds another reason for HoldingService to change.
 
-The condition exposes implementation detail that also slows comprehension time. The detail demands closer inspection: We must stop and carefully read it, then mentally assemble it into a singular concept. A comment might help, but it's not the right solution, and can be a lie anyway.
+Because it exposes implementation detail, the conditional also slows comprehension time. The detail demands closer inspection: We must carefully read it, then mentally assemble it into a singular concept. A comment might help, but it's not the right solution, and can be a lie anyway.
 
 ### Fixing the Problem
 
@@ -200,7 +213,9 @@ private boolean isLate(Holding holding) {
 }
 ```
 
-The silly line-level comment "is it late" has disappeared&mdash;the code now directly states the same thing. When extracting methods in this manner, similar such guiding comments can disappear. The comment often provides the basis for the method name, like it does here.
+The silly line-level comment "is it late?" has disappeared. The new query method's name, `isLate`, precisely imparts the same information. The implementation detail is isolated within.
+
+If you feel you need a comment to explain a line or five of related code, consider extracting it into its own method. The "guiding" comment" often provides the basis for the method name, as it does here. The comment can then disappear.
 
 Once isolated, the `isLate` method clearly demonstrates a code smell known as *feature envy*: The method, apparently envious of the `Holding` class, asks it multiple questions ("What's the date checked in? What's the date due?") in order to compute a result. It also shows disinterest in the HoldingService class on which it's defined. We can soothe the method's envy by moving it to the Holding class, where it can talk directly to its new peers:
 
@@ -225,23 +240,85 @@ public class Holding {
 }
 ```
 
-The calling code declares only policy and exposes no implementation details:
+The calling code concisely states a piece of the overall policy:
 
 ```
 if (holding.isLate())
 ```
 
-It's immediately digestible. It doesn't require us to stop and pause. Instead, it helps us quickly understand the method's control flow, which in turn helps us know where to look next for our current interests.
+The conditional is now immediately digestible. It doesn't require us to stop and pause. Instead, it helps us quickly understand the method's control flow, which in turn helps us know where to look next for our current interests.
 
-We can clean things up further, if needed, once we've moved the `checkIn` method to Holding. We might again ask: Does the Holding class itself contain too many reasons to change, either before or after the move? Should we move the method again, perhaps this time to a brand-new class? We must continue to ask these kinds of questions as we shape the design.
+After moving the `checkIn` method to Holding, we should look again at the method in its new context. Does the Holding class now contain too many reasons to change? Should we move the method again, perhaps this time to a brand-new class? With every change, we continue to ask these kinds of questions as part of continuous design.
 
-The `checkIn` method isn't perfect yet. But replacing unnecessary detail with abstractions in this manner allows us to more easily consider improving the remainder of its code. And toward our primary interest of SRP compliant classes, we've removed one reason to change from HoldingService.
+The `checkIn` method isn't perfect yet.[why not] But replacing unnecessary detail with abstractions in this manner allows us to more easily consider improving the remainder of its code. And toward our primary interest of SRP compliant classes, we've removed one reason to change from HoldingService.
+
+## Blah
+
+Opportunities to extract and move are rampant in a typicaly codebase. Another line in the `checkIn` method similarly suggests feature envy:
+
+```
+foundPatron.addFine(calculateLateFine(holding));
+```
+
+Indeed, we can move the fine calculations into holding (with two keystrokes in IDEA):
+
+[classes7]
+```
+foundPatron.addFine(holding.calculateLateFine());
+```
+
+Here's what `calculateLateFine` looks like in its new home:
+
+```
+public int calculateLateFine() {
+   var daysLate = daysLate();
+   var fineBasis = MaterialType.dailyFine(getMaterial().getFormat());
+
+   var fine = 0;
+   switch (getMaterial().getFormat()) {
+      case BOOK, NEW_RELEASE_DVD:
+         fine = fineBasis * daysLate;
+         break;
+ 
+      case AUDIO_CASSETTE, VINYL_RECORDING, MICRO_FICHE, AUDIO_CD, SOFTWARE_CD, DVD, BLU_RAY, VIDEO_CASSETTE:
+         fine = Math.min(1000, 100 + fineBasis * daysLate);
+         break;
+      default:
+         break;
+   }
+   return fine;
+}
+```
+
+The moved method still doesn't look at home in Holding, however. The code appears to predominantly interface with whatever `getMaterial` returns, although it does also ask the holding for its `daysLate` property.
+
+`calculateLateFine` also appears like it will suffer a lot of changes over time. It has at least three reasons to change: the addition of new material types (e-books, puzzles, STEM kits, and so on), new schemes to encourage patrons to return materials in high demand, and new rates to cover material price increases.
+
+It violates another SOLID principle&mdash;we want to minimize "opening up" existing classes to make changes, and instead find ways to enhance a system by adding new, single-purpose classes. This is known as the *Open-Closed Principle*, or OCP.
+
+why is this a good thing
+
+right now: a change has to occur in two places--switch statement and the numb list itself. Switch statements are sure to be replicated elsewhere.
+
+What would the OCP look like taken to the ...? It would suggest a plug &amp; play mentality, where you drop new modules in... Example: THe previous controller itself. Need a new route? Drop in a route class. Create a simple framework  that picks it up automatically. ...
+
+Typical systems being what they are, we already missed most of the opportunities to take advantage of the OCP. Our codebase is unashamed about its openness. Virtually no classes are closed. Rampant change greets everyone who much touch the code. 
+
+If change is a given, the best approach is to wait for it. Speculative cleanup introduces unncessary risk for improvement no one yet needs. Let's wait for the next change.
+
+...
+
+OK that didn't take too long. We were told, moments ago, that indeed we must support a couple new material types. Specifically, we need to allow jigsaw puzzles and board games to be borrowed.
+
+
+[[ sidebar:]] Enum types are nice but they cannot be separated--any derivatives must be implemented within the singular enum class.
+
 
 ## When Policies Change
 
 Many service classes must orchestrate numerous disparate behaviors. They must interact with business logic regarding various domains (holdings, patrons, branches), they might persist or retrieve data, and they might interact with external services. The HoldingServiceClass is one example of an orchestrating class.
 
-Some smaller services, such as a collection of behaviors concerned with date calculations, might have minimal orchestration needs.
+Some services might have minimal orchestration needs. An example is a collection of behaviors concerned with date calculations,
 
 A well-defined SRP-compliant service, as such, should either:
 
