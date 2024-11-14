@@ -160,6 +160,7 @@ The support for `dateDue` itself is a responsibility that could disappear (some 
 [intro sentence]
 The HoldingService method `checkIn` does a pretty good job of declaring the policy for returning materials:
 
+[v1]
 ```
 public int checkIn(String barCode, Date date, String branchScanCode) {
    var branch = new BranchService().find(branchScanCode);
@@ -198,6 +199,7 @@ The right way to fix the problem involves moving the specifics of "is it late" o
 
 Step one, however, is to abstract the concept of "is it late" to its own method. Yep--this notion of *extracting methods* should be familiar from the chapter on functions.
 
+[v2]
 ```
 public int checkIn(String barCode, Date date, String branchScanCode) {
    // ...
@@ -219,6 +221,7 @@ If you feel you need a comment to explain a line or five of related code, consid
 
 Once isolated, the `isLate` method clearly demonstrates a code smell known as *feature envy*: The method, apparently envious of the `Holding` class, asks it multiple questions ("What's the date checked in? What's the date due?") in order to compute a result. It also shows disinterest in the HoldingService class on which it's defined. We can soothe the method's envy by moving it to the Holding class, where it can talk directly to its new peers:
 
+[v3]
 ```
 public class HoldingService {
 // ...
@@ -269,17 +272,19 @@ foundPatron.addFine(holding.calculateLateFine());
 
 Here's what `calculateLateFine` looks like in its new home:
 
+[v3]
 ```
+
 public int calculateLateFine() {
    var daysLate = daysLate();
-   var fineBasis = MaterialType.dailyFine(getMaterial().getFormat());
+   var fineBasis = getMaterial().materialType().dailyFine();
 
    var fine = 0;
-   switch (getMaterial().getFormat()) {
+   switch (getMaterial().materialType()) {
       case BOOK, NEW_RELEASE_DVD:
          fine = fineBasis * daysLate;
          break;
- 
+
       case AUDIO_CASSETTE, VINYL_RECORDING, MICRO_FICHE, AUDIO_CD, SOFTWARE_CD, DVD, BLU_RAY, VIDEO_CASSETTE:
          fine = Math.min(1000, 100 + fineBasis * daysLate);
          break;
@@ -290,9 +295,9 @@ public int calculateLateFine() {
 }
 ```
 
-The moved method still doesn't look at home in Holding, however. The code appears to predominantly interface with whatever `getMaterial` returns, although it does also ask the holding for its `daysLate` property.
+The moved method still doesn't look at home in Holding, however. While `calculateLateFine` does interact directly with the Holding (asking for its `daysLate` property, it predominantly interacts with a Material object returned by `getMaterial`.
 
-`calculateLateFine` also appears like it will suffer a lot of changes over time. It has at least three reasons to change: the addition of new material types (e-books, puzzles, STEM kits, and so on), new schemes to encourage patrons to return materials in high demand, and new rates to cover material price increases.
+`calculateLateFine` will likely suffer many changes over time. It has at least three reasons to change: the addition of new material types (e-books, puzzles, STEM kits, and so on), new schemes to encourage patrons to return materials in high demand, and new rates to cover material price increases.
 
 It violates another SOLID principle&mdash;we want to minimize "opening up" existing classes to make changes, and instead find ways to enhance a system by adding new, single-purpose classes. This is known as the *Open-Closed Principle*, or OCP.
 
@@ -304,11 +309,153 @@ What would the OCP look like taken to the ...? It would suggest a plug &amp; pla
 
 Typical systems being what they are, we already missed most of the opportunities to take advantage of the OCP. Our codebase is unashamed about its openness. Virtually no classes are closed. Rampant change greets everyone who much touch the code. 
 
-If change is a given, the best approach is to wait for it. Speculative cleanup introduces unncessary risk for improvement no one yet needs. Let's wait for the next change.
+If change is a given, the best approach is to wait for it. Speculative cleanup introduces unnecessary risk for improvement no one yet needs. Let's wait for the next change.
 
 ...
 
 OK that didn't take too long. We were told, moments ago, that indeed we must support a couple new material types. Specifically, we need to allow jigsaw puzzles and board games to be borrowed.
+
+... text update here ...
+
+Each of the two switch branches calculates an appropriate `fine` value using one of two strategies. We can extract the tiny bits of calculation logic to a couple strategy classes, each implementing a commond interface:
+
+[v4]
+
+[v4]
+```
+public interface LateStrategy {
+   int calculateFine(int fineBasis, int daysLate);
+}
+
+public class ConstrainedFineStrategy implements LateStrategy{
+   @Override
+   public int calculateFine(int fineBasis, int daysLate) {
+      return Math.min(1000, 100 + fineBasis * daysLate);
+   }
+}
+
+public class DaysLateStrategy implements LateStrategy {
+   @Override
+   public int calculateFine(int fineBasis, int daysLate) {
+      return fineBasis * daysLate;
+   }
+}
+```
+
+Such tiny little classes!
+
+Here's the updated `calculateLateFine` method.
+
+```
+public int calculateLateFine() {
+   var daysLate = daysLate();
+   var fineBasis = getMaterial().materialType().dailyFine();
+
+   var fine = 0;
+   switch (getMaterial().materialType()) {
+      case BOOK, NEW_RELEASE_DVD:
+         fine = new DaysLateStrategy().calculateFine(fineBasis, daysLate);
+         break;
+
+      case AUDIO_CASSETTE, VINYL_RECORDING, MICRO_FICHE, AUDIO_CD, SOFTWARE_CD, DVD, BLU_RAY, VIDEO_CASSETTE:
+         fine = new ConstrainedFineStrategy().calculateFine(fineBasis, daysLate);
+         break;
+
+      default:
+         break;
+   }
+   return fine;
+}
+```
+
+Note that it retrieves the material type (e.g. BOOK) from the material, in order to decide which strategy to apply.
+
+Here's what MaterialType looks like:
+
+[v4]
+```
+public enum MaterialType {
+   BOOK(21, 10),
+   AUDIO_CASSETTE(14, 10),
+   VINYL_RECORDING(14, 10),
+   MICRO_FICHE(7, 200),
+   AUDIO_CD(7, 100),
+   SOFTWARE_CD(7, 500),
+   DVD(3, 100),
+   NEW_RELEASE_DVD(1, 200),
+   BLU_RAY(3, 200),
+   VIDEO_CASSETTE(7, 10);
+
+   private final int checkoutPeriod;
+   private final int dailyFine;
+
+   MaterialType(int checkoutPeriod, int dailyFine) {
+      this.checkoutPeriod = checkoutPeriod;
+      this.dailyFine = dailyFine;
+   }
+
+   public int dailyFine() {
+      return dailyFine;
+   }
+
+   public int checkoutPeriod() {
+      return checkoutPeriod;
+   }
+}
+```
+
+If each material type can be initialized with the checkout period and late fine amounts, it can also be initialized with a strategy object:
+
+[v5]
+```
+import domain.core.ConstrainedFineStrategy;
+import domain.core.DaysLateStrategy;
+import domain.core.LateStrategy;
+
+public enum MaterialType {
+   BOOK(21, 10, new DaysLateStrategy()),
+   AUDIO_CASSETTE(14, 10, new ConstrainedFineStrategy()),
+   VINYL_RECORDING(14, 10, new ConstrainedFineStrategy()),
+   MICRO_FICHE(7, 200, new ConstrainedFineStrategy()),
+   AUDIO_CD(7, 100, new ConstrainedFineStrategy()),
+   SOFTWARE_CD(7, 500, new ConstrainedFineStrategy()),
+   DVD(3, 100, new ConstrainedFineStrategy()),
+   NEW_RELEASE_DVD(1, 200, new DaysLateStrategy()),
+   BLU_RAY(3, 200, new ConstrainedFineStrategy()),
+   VIDEO_CASSETTE(7, 10, new ConstrainedFineStrategy());
+
+   private final int checkoutPeriod;
+   private final int dailyFine;
+   private final LateStrategy lateStrategy;
+
+   MaterialType(int checkoutPeriod, int dailyFine, LateStrategy lateStrategy) {
+      this.checkoutPeriod = checkoutPeriod;
+      this.dailyFine = dailyFine;
+      this.lateStrategy = lateStrategy;
+   }
+   // ...
+}
+```
+
+(Yes we could use singletons for each LateStrategy derivative, particularly since the subclasses contain no data. But why make things more complicated?)
+
+MaterialType can then supply a `calculateFine` implementation that delegates to the `lateStrategy` object:
+
+```
+public int calculateFine(int daysLate) {
+   return lateStrategy.calculateFine(dailyFine, daysLate);
+}
+```
+
+The best part? At this point, the Holding method can simplify to a single line of code that delegates to MaterialType:
+
+```
+public int calculateLateFine() {
+   return getMaterial().materialType().calculateFine(daysLate());
+}
+```
+
+Here's a picture of the updated solution:
 
 
 [[ sidebar:]] Enum types are nice but they cannot be separated--any derivatives must be implemented within the singular enum class.
