@@ -217,7 +217,7 @@ private boolean isLate(Holding holding) {
 
 The silly line-level comment "is it late?" has disappeared. The new query method's name, `isLate`, precisely imparts the same information. The implementation detail is isolated within.
 
-If you feel you need a comment to explain a line or five of related code, consider extracting it into its own method. The "guiding" comment" often provides the basis for the method name, as it does here. The comment can then disappear.
+If you feel you need a comment to explain a line or five of related code, consider extracting it into its own method. The "guiding" comment often provides the basis for the method name, as it does here. The clear, concise method name obviates the need for the comment.
 
 Once isolated, the `isLate` method clearly demonstrates a code smell known as *feature envy*: The method, apparently envious of the `Holding` class, asks it multiple questions ("What's the date checked in? What's the date due?") in order to compute a result. It also shows disinterest in the HoldingService class on which it's defined. We can soothe the method's envy by moving it to the Holding class, where it can talk directly to its new peers:
 
@@ -295,7 +295,7 @@ public int calculateLateFine() {
 }
 ```
 
-The moved method still doesn't look at home in Holding, however. While `calculateLateFine` does interact directly with the Holding (asking for its `daysLate` property, it predominantly interacts with a Material object returned by `getMaterial`.
+The moved method still doesn't look at home in Holding, however. While `calculateLateFine` does interact directly with the Holding (asking for `daysLate`), it predominantly interacts with a Material object returned by `getMaterial`.
 
 `calculateLateFine` will likely suffer many changes over time. It has at least three reasons to change: the addition of new material types (e-books, puzzles, STEM kits, and so on), new schemes to encourage patrons to return materials in high demand, and new rates to cover material price increases.
 
@@ -457,6 +457,7 @@ public int calculateLateFine() {
 
 Here's a picture of the updated solution:
 
+![HoldingService](./images/strategy.png "fines")
 
 [[ sidebar:]] Enum types are nice but they cannot be separated--any derivatives must be implemented within the singular enum class.
 
