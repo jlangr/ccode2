@@ -257,15 +257,18 @@ The `checkIn` method isn't perfect yet.[why not] But replacing unnecessary detai
 
 ## Blah
 
-Opportunities to extract and move are rampant in a typicaly codebase. Another line in the `checkIn` method similarly suggests feature envy:
+Opportunities to extract and move are rampant in a typical codebase. Extracting implementation detail from a method frequently makes it obvious that the code belongs elsewhere. Do this enough and eventually most code makes it to the right place, and each "place" is a reasonably small, cohesive, and easy to work with.
+
+Let's do one more quick extract and move, and see what else can come of it.
+
+Another line in the `checkIn` method similarly suggests feature envy:
 
 ```
 foundPatron.addFine(calculateLateFine(holding));
 ```
 
-Indeed, we can move the fine calculations into holding (with two keystrokes in IDEA):
+Indeed, we can move the fine calculations into holding (with only two keystrokes in IDEA!):
 
-[classes7]
 ```
 foundPatron.addFine(holding.calculateLateFine());
 ```
@@ -295,27 +298,28 @@ public int calculateLateFine() {
 }
 ```
 
-The moved method still doesn't look at home in Holding, however. While `calculateLateFine` does interact directly with the Holding (asking for `daysLate`), it predominantly interacts with a Material object returned by `getMaterial`.
+Ugh, a switch statement, and an old-school one at that.
 
-`calculateLateFine` will likely suffer many changes over time. It has at least three reasons to change: the addition of new material types (e-books, puzzles, STEM kits, and so on), new schemes to encourage patrons to return materials in high demand, and new rates to cover material price increases.
+Even after being moved to holding, the method still doesn't look at home, however. While `calculateLateFine` does interact directly with the Holding (asking for `daysLate`), it predominantly interacts with the Material object returned by `getMaterial`.
 
-It violates another SOLID principle&mdash;we want to minimize "opening up" existing classes to make changes, and instead find ways to enhance a system by adding new, single-purpose classes. This is known as the *Open-Closed Principle*, or OCP.
+`calculateLateFine` is the sort of method that will likely suffer many changes over time. It has at least three reasons to change: the addition of new material types (e-books, puzzles, STEM kits, and so on), new schemes to encourage patrons to return materials in high demand, and new rates to cover material price increases. 
 
-why is this a good thing
+Such a method violates another SOLID principle&mdash;we want to minimize "opening up" existing classes to make changes, and instead find ways to enhance a system by adding new, single-purpose classes. This is known as the *Open-Closed Principle*, or OCP.
 
-right now: a change has to occur in two places--switch statement and the numb list itself. Switch statements are sure to be replicated elsewhere.
+Open classes introduce risk and cost; Holding is clearly open. Changes to any of the three responsibilities in `calculateLateFine` carries the risk of breaking existing behaviors in Holding. With a drippy `switch` statement in the mix, anything can happen.
 
-What would the OCP look like taken to the ...? It would suggest a plug &amp; play mentality, where you drop new modules in... Example: THe previous controller itself. Need a new route? Drop in a route class. Create a simple framework  that picks it up automatically. ...
+
+## Should We Do Anything Now?
 
 Typical systems being what they are, we already missed most of the opportunities to take advantage of the OCP. Our codebase is unashamed about its openness. Virtually no classes are closed. Rampant change greets everyone who much touch the code. 
 
 If change is a given, the best approach is to wait for it. Speculative cleanup introduces unnecessary risk for improvement no one yet needs. Let's wait for the next change.
 
-...
+## What About Now?
 
-OK that didn't take too long. We were told, moments ago, that indeed we must support a couple new material types. Specifically, we need to allow jigsaw puzzles and board games to be borrowed.
+OK that didn't take too long. We were told, moments ago (between the prior paragraph and this section), that indeed we must support a couple new material types. Specifically, we need to allow jigsaw puzzles and board games to be borrowed. There's also a new fine scheme the library folks want to try.
 
-... text update here ...
+We'll prepare for the new requirement by first 
 
 Each of the two switch branches calculates an appropriate `fine` value using one of two strategies. We can extract the tiny bits of calculation logic to a couple strategy classes, each implementing a commond interface:
 
@@ -459,7 +463,9 @@ Here's a picture of the updated solution:
 
 ![HoldingService](./images/strategy.png "fines")
 
-[[ sidebar:]] Enum types are nice but they cannot be separated--any derivatives must be implemented within the singular enum class.
+[TODO: draw the UML in something that allows more control over layout; yUML doesn't appear to]
+
+What would the OCP look like taken to the ...? It would suggest a plug &amp; play mentality, where you drop new modules in... Example: THe previous controller itself. Need a new route? Drop in a route class. Create a simple framework  that picks it up automatically. ...
 
 
 ## When Policies Change
