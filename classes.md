@@ -181,7 +181,7 @@ public int checkIn(String barCode, Date date, String branchScanCode) {
 }
 ```
 
-The `checkIn` method still begs a bit of cleanup. One line of glaring implementation detail stands out as a potential problem: the `if` statement that determines whether the check-in is late:
+The `checkIn` method still begs a bit of cleanup. One line of glaring implementation detail stands out as a potential problem&mdash;the `if` statement that determines whether the check-in is late:
 
 ```
 if (holding.dateLastCheckedIn().after(holding.dateDue())) { // is it late?
@@ -189,15 +189,17 @@ if (holding.dateLastCheckedIn().after(holding.dateDue())) { // is it late?
 
 That conditional represents a policy decision: A holding is late if it's returned after the date due.
 
-However, it's possible that the policy is considerably more complex. A book might not be late if borrowed by VIPs (very important patrons), or if returned within a certain grace period. As a result, that seemingly innocuous single line of code adds another reason for HoldingService to change.
+However, it's possible that the policy is considerably more complex. Librarians might imagine no end of new policy changes: VIPs (very important patrons) might be exempt from fines, they might allow grace periods, and so on. As a result, that seemingly innocuous single line of code adds another reason for HoldingService to change.
 
-Because it exposes implementation detail, the conditional also slows comprehension time. The detail demands closer inspection: We must carefully read it, then mentally assemble it into a singular concept. A comment might help, but it's not the right solution, and can be a lie anyway.
+Because it exposes implementation detail, the conditional also slows comprehension time. The detail demands closer inspection: We must carefully read it, then mentally assemble it into a singular concept.
+
+A comment might help, but it's not the right solution, and can be a lie anyway. It's best if we can scan the code itself without the need to look elsewhere at comments&mdash;the distracting footnotes of code.
 
 ### Fixing the Problem
 
 The right way to fix the problem involves moving the specifics of "is it late" out of the HoldingService class. Where to? We could move it to a new class such as LateHoldingService, but the obvious short-term candidate appears to be the Holding class.
 
-Step one, however, is to abstract the concept of "is it late" to its own method. Yep--this notion of *extracting methods* should be familiar from the chapter on functions.
+Step one, however, is to abstract the concept of "is it late" to its own method. Yep&mdash;this notion of *extracting methods* should be familiar from the chapter on functions.
 
 [v2]
 ```
@@ -215,11 +217,11 @@ private boolean isLate(Holding holding) {
 }
 ```
 
-The silly line-level comment "is it late?" has disappeared. The new query method's name, `isLate`, precisely imparts the same information. The implementation detail is isolated within.
+The silly line-level comment "is it late?" has disappeared. The new query method's name, `isLate`, precisely imparts the same information. The implementation detail is encapsulated within.
 
-If you feel you need a comment to explain a line or five of related code, consider extracting it into its own method. The "guiding" comment often provides the basis for the method name, as it does here. The clear, concise method name obviates the need for the comment.
+Going forward, if you feel you need a comment to guide readers through a line or five of related code, consider extracting it into its own method. The "guiding" comment often provides the basis for the method name, as it does here. A clear, concise method name obviates the need for a comment.
 
-Once isolated, the `isLate` method clearly demonstrates a code smell known as *feature envy*: The method, apparently envious of the `Holding` class, asks it multiple questions ("What's the date checked in? What's the date due?") in order to compute a result. It also shows disinterest in the HoldingService class on which it's defined. We can soothe the method's envy by moving it to the Holding class, where it can talk directly to its new peers:
+Once isolated, the `isLate` method reveals a glaring code smell known as *feature envy*: The method, apparently envious of the `Holding` class, asks it multiple questions ("What's the date checked in? What's the date due?") in order to compute a result. It also shows disinterest in the HoldingService class on which it's defined. We can soothe the method's envy by moving it to the Holding class, where it can talk directly to its new peers:
 
 [v3]
 ```
@@ -243,23 +245,23 @@ public class Holding {
 }
 ```
 
-The calling code concisely states a piece of the overall policy:
+The calling code now concisely states a piece of the overall policy:
 
 ```
 if (holding.isLate())
 ```
 
-The conditional is now immediately digestible. It doesn't require us to stop and pause. Instead, it helps us quickly understand the method's control flow, which in turn helps us know where to look next for our current interests.
+The conditional is now immediately digestible. It doesn't require us to stop and pause. Instead, it helps us quickly understand the method's control flow, which in turn helps us know where we need to look next.
 
-After moving the `checkIn` method to Holding, we should look again at the method in its new context. Does the Holding class now contain too many reasons to change? Should we move the method again, perhaps this time to a brand-new class? With every change, we continue to ask these kinds of questions as part of continuous design.
+After moving the `checkIn` method to Holding, we look again at the method in its new context. Does the Holding class now contain too many reasons to change? Should we move the method again, perhaps this time to a brand-new class? With every change, we continue to ask these kinds of questions as part of continuous design.
 
 The `checkIn` method isn't perfect yet.[why not] But replacing unnecessary detail with abstractions in this manner allows us to more easily consider improving the remainder of its code. And toward our primary interest of SRP compliant classes, we've removed one reason to change from HoldingService.
 
-## Blah
+## An Overly-Open Implementation
 
-Opportunities to extract and move are rampant in a typical codebase. Extracting implementation detail from a method frequently makes it obvious that the code belongs elsewhere. Do this enough and eventually most code makes it to the right place, and each "place" is a reasonably small, cohesive, and easy to work with.
+Opportunities to extract and move are rampant in a typical codebase. Extracting implementation detail from a method often makes it obvious that the code belongs elsewhere. Do this enough and eventually most code makes it to the right place, and each "place" is a reasonably small, cohesive, and easy to work with.
 
-Let's do one more quick extract and move, and see what else can come of it.
+Let's execute one more quick extract-and-move, then focus on the moved method.
 
 Another line in the `checkIn` method similarly suggests feature envy:
 
@@ -291,53 +293,52 @@ public int calculateLateFine() {
       case AUDIO_CASSETTE, VINYL_RECORDING, MICRO_FICHE, AUDIO_CD, SOFTWARE_CD, DVD, BLU_RAY, VIDEO_CASSETTE:
          fine = Math.min(1000, 100 + fineBasis * daysLate);
          break;
-      default:
-         break;
    }
    return fine;
 }
 ```
 
-Ugh, a switch statement, and an old-school one at that.
+Ugh, a switch statement, and an old-school one at that&mdash;the kind where logic can accidentally drip from one case to the next if you're careless.
 
-Even after being moved to holding, the method still doesn't look at home, however. While `calculateLateFine` does interact directly with the Holding (asking for `daysLate`), it predominantly interacts with the Material object returned by `getMaterial`.
+Even after being moved to holding, the method still doesn't look at home. While `calculateLateFine` does interact directly with the Holding (asking for `daysLate`), it predominantly interacts with the Material object returned by `getMaterial`.
 
 `calculateLateFine` is the sort of method that will likely suffer many changes over time. It has at least three reasons to change: the addition of new material types (e-books, puzzles, STEM kits, and so on), new schemes to encourage patrons to return materials in high demand, and new rates to cover material price increases. 
 
 Such a method violates another SOLID principle&mdash;we want to minimize "opening up" existing classes to make changes, and instead find ways to enhance a system by adding new, single-purpose classes. This is known as the *Open-Closed Principle*, or OCP.
 
-Open classes introduce risk and cost; Holding is clearly open. Changes to any of the three responsibilities in `calculateLateFine` carries the risk of breaking existing behaviors in Holding. With a drippy `switch` statement in the mix, anything can happen.
-
+Open classes introduce risk and cost. Holding is mos' def open. Changes to any of the three responsibilities in `calculateLateFine` carries the risk of breaking existing behaviors in Holding. With a drippy `switch` statement in the mix, anything can happen.
 
 ## Should We Do Anything Now?
 
 Typical systems being what they are, we already missed most of the opportunities to take advantage of the OCP. Our codebase is unashamed about its openness. Virtually no classes are closed. Rampant change greets everyone who much touch the code. 
 
-If change is a given, the best approach is to wait for it. Speculative cleanup introduces unnecessary risk for improvement no one yet needs. Let's wait for the next change.
+If change is a given, the best approach is to wait for it. Speculative cleanup introduces unnecessary risk from improvements no one yet needs. Let's wait for the next change.
 
 ## What About Now?
 
-OK that didn't take too long. We were told, moments ago (between the prior paragraph and this section), that indeed we must support a couple new material types. Specifically, we need to allow jigsaw puzzles and board games to be borrowed. There's also a new fine scheme the library folks want to try.
+OK that didn't take too long. We were told, moments ago (between the prior paragraph and this section), that indeed we must support a couple new material types. Specifically, we need to allow jigsaw puzzles and board games to be borrowed. They'll fall under new fine scheme the library folks want to try.
 
-We'll prepare for the new requirement by first 
+We'll prepare for the new requirement by first factoring the code so that the change has minimal impact.
 
-Each of the two switch branches calculates an appropriate `fine` value using one of two strategies. We can extract the tiny bits of calculation logic to a couple strategy classes, each implementing a commond interface:
-
-[v4]
+Each of the two switch branches calculates an appropriate `fine` value using one of two strategies. We can extract the tiny bits of calculation logic to a couple strategy classes, each implementing a command interface:
 
 [v4]
 ```
 public interface LateStrategy {
    int calculateFine(int fineBasis, int daysLate);
 }
+```
 
+```
 public class ConstrainedFineStrategy implements LateStrategy{
    @Override
    public int calculateFine(int fineBasis, int daysLate) {
       return Math.min(1000, 100 + fineBasis * daysLate);
    }
 }
+```
 
+```
 public class DaysLateStrategy implements LateStrategy {
    @Override
    public int calculateFine(int fineBasis, int daysLate) {
@@ -364,15 +365,12 @@ public int calculateLateFine() {
       case AUDIO_CASSETTE, VINYL_RECORDING, MICRO_FICHE, AUDIO_CD, SOFTWARE_CD, DVD, BLU_RAY, VIDEO_CASSETTE:
          fine = new ConstrainedFineStrategy().calculateFine(fineBasis, daysLate);
          break;
-
-      default:
-         break;
    }
    return fine;
 }
 ```
 
-Note that it retrieves the material type (e.g. BOOK) from the material, in order to decide which strategy to apply.
+Note that `calculateLateFine` first retrieves the material type (e.g. `BOOK`) from the material, in order to decide which strategy to apply.
 
 Here's what MaterialType looks like:
 
@@ -441,7 +439,7 @@ public enum MaterialType {
 }
 ```
 
-(Yes we could use singletons for each LateStrategy derivative, particularly since the subclasses contain no data. But why make things more complicated?)
+(Yes we could use singletons for each LateStrategy derivative, particularly since the subclasses contain no data. We could also specify a class type for each enum value, then use reflection to instantiate the strategy object. But why make things more complicated?)
 
 MaterialType can then supply a `calculateFine` implementation that delegates to the `lateStrategy` object:
 
@@ -451,7 +449,7 @@ public int calculateFine(int daysLate) {
 }
 ```
 
-The best part? At this point, the Holding method can simplify to a single line of code that delegates to MaterialType:
+The best part? At this point, the Holding method can simplify to a few lines of code to a single line of code that delegates to MaterialType:
 
 ```
 public int calculateLateFine() {
@@ -464,6 +462,21 @@ Here's a picture of the updated solution:
 ![HoldingService](./images/strategy.png "fines")
 
 [TODO: draw the UML in something that allows more control over layout; yUML doesn't appear to]
+
+## Closed, Cohesive, Single-Responsibility Classes
+
+### Simpler Testing
+
+Conceivably, you could choose to retain whatever tests you had in place for HoldingService. When adding the new fine behavior, you'd update these tests. That's one acceptable route.
+
+However, you can also distribute the testing as well. Yes, the individual fine policies aren't publicly exposed to the ultimate client, and might be considered "private behavior." But the policies are also isolated, closed concepts that can be reused.
+
+Otherwise, the conclusion is to drive to test everything only at the public interface layer. The problem with that is that writing and maintaining such tests can be a nightmare.
+
+Don't test implementation details. Test conceptual details. Small closed units should be concepts that have meaning in any solution. A days-late fine policy can be tested in isolation without exposing any implementation specifics.
+
+which Testing our overall solution simplifies. Previously, the bulk of the logic to calculate fines was in the HoldingService. With logic distributed into small, single-purpose classes, each of the related unit tests can be simpler and more direct.
+
 
 What would the OCP look like taken to the ...? It would suggest a plug &amp; play mentality, where you drop new modules in... Example: THe previous controller itself. Need a new route? Drop in a route class. Create a simple framework  that picks it up automatically. ...
 
