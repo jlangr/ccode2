@@ -32,15 +32,14 @@ You could conceivably lump together your system's entire set of methods into a s
 Classes provide ways to help you keep your sanity as your system grows. Without sensible organization, you will:
 
 * have a harder time finding the code you're looking for
-* bloat your system with considerable redundancy; doubling it in size is easily in range
+* bloat your system with considerable redundancy; doubling it in size is a likely possibility
 * create defects around inconsistent behaviors, due to the redundancies
 * create defects due to increasing complexity (...)
 * spend extensive amounts of time writing automated tests for it
-* ...
 
 All those outcomes increase in likelihood with growth, in turn increasing your costs and frustrations.
 
-We'll talk about "clean class design" throughout this chapter. In your head, translate that to "doing all the things that should make our development lives easier."
+We'll talk about *clean class design* throughout this chapter. In your head, translate that to "doing all the things that should make our development lives easier."
 
 "Clean" isn't a ding at anyone. Our notion of "unclean" is a way of characterizing code that demands more effort from the average developer to understand or maintain.
 
@@ -54,7 +53,7 @@ In the late 1940s, a typical system *was* implemented like our degenerate exampl
 
 John von Neumann and Herman Goldstine's article, "Planning and Coding of Problems for an Electronic Computing Instrument" explored the premise of a subroutine: *"We call the coded sequence of a problem a routine, and one which is formed with the purpose of possible substitution into other routines, a **subroutine**."* The premise was that subroutines (particularly for smaller, common operations) would cut down on the amount of code by allowing re-use, and would also help reduce defects.
 
-Pioneers Maurice Wilkes and David Wheeler were inspired by ideas found in the seminal article, and implemented the concept of subroutines in the EDSAC computer in 1951. In short, they believed that code modularization brought about by subroutines would lead to less costly software development. They didn't wait for research (though it did come, slowly, across later decades).
+Pioneers Maurice Wilkes and David Wheeler, inspired by ideas found in the seminal article, implemented the concept of subroutines in the EDSAC computer in 1951. In short, they believed that code modularization brought about by subroutines would lead to less costly software development. They didn't wait for research (though it did come, slowly, across later decades).
 
 Since, we extrapolated the claimed value of modularization, originally brought about in the form of subroutines, to larger contexts. We learned to organize collections of subroutines&mdash;functions or methods&mdash;into modules or classes. That in turn presented new challenges around the composition of such modules and classes, as well as the interrelationships (dependencies) between them. We began to derive various heuristics to guide other developers.
 
@@ -63,18 +62,26 @@ Since, we extrapolated the claimed value of modularization, originally brought a
 Heuristics help you identify the steps to take, and also the steps to avoid, to arrive at well-designed classes:
 
 - **Positive heuristics**&mdash;steps to take. Kent Beck's four rules of emergent design[[ref]], for example, tell you to ensure that all code is testable as you go, to eliminate logical redundancies, to ensure all programmatic elements are clearly and concisely named, and to minimize overdesign.
-- **Negative heuristics**&mdash;steps to avoid. Anti-patterns describe bad paths to take while developing code.
+- **Negative heuristics**&mdash;steps to avoid. Anti-patterns describe bad paths to take while developing code. *Copy-paste programming," for example, tells us to not habitually create new logic by first duplicating existing code, then changing it. (A memorable name for this anti-pattern might be "grab and stab." Or "snatch and patch." Or "copy and corrup." Or ... )
 
 Characteristics help you assess the current quality of your classes.
 
 - **Positive characteristics**&mdash;desired traits. Bob Martin's collection of five class design principles, known as SOLID, have withstood around three decades of scrutiny, and can be practically applied to functional code as well.
 - **Negative characteristics**&mdash;undesired traits. Martin Fowler's code smells [ref] are a collection of things to avoid in code, each identified with a memorable name. *Shotgun surgery*, for example, indicates that your code demands that you frequently must update numerous classes in order to effect simple changes.
 
-Characteristics and heuristics can describe design at both the method (micro) level and the class (macro) level (or even higher levels).
+Over time, folks in the software development arena have codified numerous collections of heuristics and characteristics. We'll refer to any of these as a *design perspective*.
+
+Design perspectives can describe design at both the method (micro) level and the class (macro) level (or even higher levels).
 
 You might be able to consider some characteristics as heuristics, and vice versa. [ so what ] For much of this chapter, we'll focus on the *characteristics* of an ideally-sized class, because the idea is that you can glean them from looking at the code.
 
 Such a class is typically small. Its name concisely summarizes the small numbers of behaviors gathered within. And it is defined cohesively [define]. As a result, the class exhibits the characteristic of adhering to the single-responsibility principle (SRP): It has one reason to change.
+
+Design perspectives most certainly overlap. Notably, outcomes for the more overarching perspectives&mdash;SOLID, Kent Beck's simple design, and Martin Fowler's code smells, for example&mdash;are comparable. Both foster small, cohesive modules and functions.
+
+With most of these perspectives there also exists a recognition of balance, whether explicit or implicit: Virtually no principle is absolute. Kent Beck's four rules of simple design, for example, guide us toward small, single responsibility classes. They're easier to test (rule 1), they can help us drive out redundancies more easily (rule 2), and they promote clear, intention revealing names (rule 3). But rule 4&mdash;minimize the number of modules and functions&mdash;suggests that we can go too far.
+
+Most of us needn't worry: The typical system has moved too far in the wrong direction, containing large, multipurpose modules and functions. Still, keep in mind that there are tradeoffs for every choice in software. Choose the design perspectives you like, and focus on the outcome of code that is easy to maintain.
 
 ## When Is a Class Too Large?
 
@@ -523,7 +530,9 @@ An ideally-defined SRP compliant class should be an entry point into a series of
 
 ## Enter AI
 
-The age of AI takes us to the point where it now becomes obvious how we are advancing by orders of magnitude every 7 years or so. Today, we can ask an LLM to produce code at the class level, and it will do an ok job, maybe getting 80% of the code correct. (Here's that good old 80/20 rule again.) We can get it to a better job by:
+We (humans) are and have been advancing by orders of magnitude, technologically, every 5-10 years or so for the past 90 years. AI will continue that amazing trend, accelerating us toward the singularity by the 2024s. We are just "hitting the steep part of the curve." [need exact Kurzweill quote/ref here]
+
+Today, we can ask an LLM to produce code at the class level, and it will do an OK job, maybe getting 80% of the code correct. (There's that good old 80/20 rule again[ref].) We can help an LLM to a better job by:
 
 * providing it with examples
 * providing it with a simple style that tells it to:
