@@ -62,7 +62,7 @@ Since, we extrapolated the claimed value of modularization, originally brought a
 Heuristics help you identify the steps to take, and also the steps to avoid, to arrive at well-designed classes:
 
 - **Positive heuristics**&mdash;steps to take. Kent Beck's four rules of emergent design[[ref]], for example, tell you to ensure that all code is testable as you go, to eliminate logical redundancies, to ensure all programmatic elements are clearly and concisely named, and to minimize overdesign.
-- **Negative heuristics**&mdash;steps to avoid. Anti-patterns describe bad paths to take while developing code. *Copy-paste programming," for example, tells us to not habitually create new logic by first duplicating existing code, then changing it. (A memorable name for this anti-pattern might be "grab and stab." Or "snatch and patch." Or "copy and corrup." Or ... )
+- **Negative heuristics**&mdash;steps to avoid. Anti-patterns describe bad paths to take while developing code. *Copy-paste programming," for example, tells us to not habitually create new logic by first duplicating existing code, then changing it. (A more-memorable name for this anti-pattern might be "grab and stab." Or "snatch and patch." Or "copy and corrupt." Or... Maybe that's enough for now. Don't do it.)
 
 Characteristics help you assess the current quality of your classes.
 
@@ -79,9 +79,9 @@ Such a class is typically small. Its name concisely summarizes the small numbers
 
 Design perspectives most certainly overlap. Notably, outcomes for the more overarching perspectives&mdash;SOLID, Kent Beck's simple design, and Martin Fowler's code smells, for example&mdash;are comparable. Both foster small, cohesive modules and functions.
 
-With most of these perspectives there also exists a recognition of balance, whether explicit or implicit: Virtually no principle is absolute. Kent Beck's four rules of simple design, for example, guide us toward small, single responsibility classes. They're easier to test (rule 1), they can help us drive out redundancies more easily (rule 2), and they promote clear, intention revealing names (rule 3). But rule 4&mdash;minimize the number of modules and functions&mdash;suggests that we can go too far.
+In nearly all of these perspectives, there's an acknowledgment, whether stated outright or implied, of the need for balance: Virtually no principle is absolute. Kent Beck's four rules of simple design, for example, guide us toward small, single responsibility classes. They're easier to test (rule 1), they can help us drive out redundancies more easily (rule 2), and they promote clear, intention revealing names (rule 3). But rule 4&mdash;minimize the number of modules and functions&mdash;suggests that we can go too far.
 
-Most of us needn't worry: The typical system has moved too far in the wrong direction, containing large, multipurpose modules and functions. Still, keep in mind that there are tradeoffs for every choice in software. Choose the design perspectives you like, and focus on the outcome of code that is easy to maintain.
+Most of us needn't worry: The typical system has moved too far in the wrong direction, containing large, muddled, multipurpose modules and functions. Still, keep in mind that there are tradeoffs for every choice in software. Choose the design perspective(s) you like, and focus on the outcome of creating code that is easy to maintain.
 
 ## When Is a Class Too Large?
 
@@ -319,34 +319,50 @@ OK that didn't take too long. We were told, moments ago (between the prior parag
 
 We'll prepare for the new requirement by first factoring the code so that the change has minimal impact.
 
-Each of the two switch branches calculates an appropriate `fine` value using one of two strategies. We can extract the tiny bits of calculation logic to a couple strategy classes, each implementing a command interface:
+Each of the two switch branches calculates an appropriate `fine` value using one of two strategies. We can extract the tiny bits of calculation logic to a couple strategy classes, each implementing a common interface:
 
 [v4]
 ```
 public interface LateStrategy {
-   int calculateFine(int fineBasis, int daysLate);
+   int calculateFine(int daysLate);
 }
 ```
 
 ```
 public class ConstrainedFineStrategy implements LateStrategy{
+   public static final short BASE_FEE = 100;
+   public static final short MAX_FINE = 1000;
+
+   private final int fineBasis;
+
+   public ConstrainedFineStrategy(int fineBasis) {
+      this.fineBasis = fineBasis;
+   }
+
    @Override
-   public int calculateFine(int fineBasis, int daysLate) {
-      return Math.min(1000, 100 + fineBasis * daysLate);
+   public int calculateFine(int daysLate) {
+      return Math.min(MAX_FINE, BASE_FEE + fineBasis * daysLate);
    }
 }
 ```
 
 ```
 public class DaysLateStrategy implements LateStrategy {
+   private final int fineBasis;
+
+   public DaysLateStrategy(int fineBasis) {
+      this.fineBasis = fineBasis;
+   }
+
    @Override
-   public int calculateFine(int fineBasis, int daysLate) {
+   public int calculateFine(int daysLate) {
       return fineBasis * daysLate;
    }
 }
+
 ```
 
-Such tiny little classes!
+What cute, tiny little classes!
 
 Here's the updated `calculateLateFine` method.
 
@@ -358,11 +374,11 @@ public int calculateLateFine() {
    var fine = 0;
    switch (getMaterial().materialType()) {
       case BOOK, NEW_RELEASE_DVD:
-         fine = new DaysLateStrategy().calculateFine(fineBasis, daysLate);
+         fine = new DaysLateStrategy(fineBasis).calculateFine(daysLate);
          break;
 
       case AUDIO_CASSETTE, VINYL_RECORDING, MICRO_FICHE, AUDIO_CD, SOFTWARE_CD, DVD, BLU_RAY, VIDEO_CASSETTE:
-         fine = new ConstrainedFineStrategy().calculateFine(fineBasis, daysLate);
+         fine = new ConstrainedFineStrategy(fineBasis).calculateFine(daysLate);
          break;
    }
    return fine;
@@ -414,27 +430,32 @@ import domain.core.DaysLateStrategy;
 import domain.core.LateStrategy;
 
 public enum MaterialType {
-   BOOK(21, 10, new DaysLateStrategy()),
-   AUDIO_CASSETTE(14, 10, new ConstrainedFineStrategy()),
-   VINYL_RECORDING(14, 10, new ConstrainedFineStrategy()),
-   MICRO_FICHE(7, 200, new ConstrainedFineStrategy()),
-   AUDIO_CD(7, 100, new ConstrainedFineStrategy()),
-   SOFTWARE_CD(7, 500, new ConstrainedFineStrategy()),
-   DVD(3, 100, new ConstrainedFineStrategy()),
-   NEW_RELEASE_DVD(1, 200, new DaysLateStrategy()),
-   BLU_RAY(3, 200, new ConstrainedFineStrategy()),
-   VIDEO_CASSETTE(7, 10, new ConstrainedFineStrategy());
+   BOOK(21, new DaysLateStrategy(10)),
+   AUDIO_CASSETTE(14, new ConstrainedFineStrategy(10)),
+   VINYL_RECORDING(14, new ConstrainedFineStrategy(10)),
+   MICRO_FICHE(7, new ConstrainedFineStrategy(200)),
+   AUDIO_CD(7, new ConstrainedFineStrategy(100)),
+   SOFTWARE_CD(7, new ConstrainedFineStrategy(500)),
+   DVD(3, new ConstrainedFineStrategy(100)),
+   NEW_RELEASE_DVD(1, new DaysLateStrategy(200)),
+   BLU_RAY(3, new ConstrainedFineStrategy(200)),
+   VIDEO_CASSETTE(7, new ConstrainedFineStrategy(10));
 
    private final int checkoutPeriod;
-   private final int dailyFine;
    private final LateStrategy lateStrategy;
 
-   MaterialType(int checkoutPeriod, int dailyFine, LateStrategy lateStrategy) {
+   MaterialType(int checkoutPeriod, LateStrategy lateStrategy) {
       this.checkoutPeriod = checkoutPeriod;
-      this.dailyFine = dailyFine;
       this.lateStrategy = lateStrategy;
    }
-   // ...
+
+   public int checkoutPeriod() {
+      return checkoutPeriod;
+   }
+
+   public int calculateFine(int daysLate) {
+      return lateStrategy.calculateFine(daysLate);
+   }
 }
 ```
 
@@ -462,11 +483,69 @@ Here's a picture of the updated solution:
 
 [TODO: draw the UML in something that allows more control over layout; yUML doesn't appear to]
 
-## Adding the New Feature (TODO)
-
-[this will be a quick code section that demonstrates adding support for checkout out jigsaw puzzles and such. New fine policy will be a bit bizarre for humor purposes]
-
 ## Closed, Cohesive, Single-Responsibility Classes
+
+We've been tasked with supporting a new feature. For jigsaw puzzles and board games, the library board has decided to test out a new fine scheme. We test-drive the corresponding strategy class:
+
+```
+public class DegradingFineStrategy implements LateStrategy {
+   private final int fineBasis;
+   private final double degradationRate;
+
+   public DegradingFineStrategy(int fineBasis, double degradationRate) {
+      this.fineBasis = fineBasis;
+      this.degradationRate = degradationRate;
+   }
+
+   @Override
+   public int calculateFine(int daysLate) {
+      double total = fineBasis * (1 - Math.pow(1 - degradationRate, daysLate)) / degradationRate;
+      return (int) Math.round(total);
+   }
+}
+```
+
+Here's the tests, in case you thought we were pretending to write them:
+
+```
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class DegradingFineStrategyTest {
+   int initialFine = 1000;
+   double degradationRate = 0.1d;
+   DegradingFineStrategy strategy = new DegradingFineStrategy(initialFine, degradationRate);
+
+   @Test
+   void firstDayIsFineBasis() {
+      assertEquals(initialFine, strategy.calculateFine(1));
+   }
+
+   @Test
+   void nextDayReducedUsingDegradationRate() {
+      assertEquals(1000 + 900, strategy.calculateFine(2));
+   }
+
+   @Test
+   void multipleDays() {
+      assertEquals(1000 + 900 + 810 + 729 + 656, strategy.calculateFine(5));
+   }
+}
+
+```
+
+For now, we must add a line to the MaterialType class to accommodate the new category:
+
+```
+public enum MaterialType {
+   GAMES_AND_PUZZLES(21, new DegradingFineStrategy(500, 0.20)),
+   BOOK(21, new DaysLateStrategy(10)),
+   AUDIO_CASSETTE(14, new ConstrainedFineStrategy(10)),
+   // ...
+}
+```
+
+As a result of having to modify an existing class, our system isn't quite fully closed with respect to accommodating new fine schemes. But we realize that it wouldn't be difficult to replace the MaterialType enum with a class that reads the necessary information from a database. Once built, our system would be fully OCP compliant: Code a new class, seed the database with sufficient configuration data, and go&mdash;no changes to existing classes required!
 
 ### When Policies Change
 
@@ -497,6 +576,8 @@ It's not a new idea, however&mdash;we worked with systems approaching this ideal
 
 As with most principles, consider both the SRP and the OCP as ideals: You want to always move in their direction, not away from them. It might be ok that you'll never hit the ideal. The typical system, however, does the opposite, and that's why it's harder to work with it as it grows.
 
+For now, forgive your system for its flaws. Moving forward, assess each change you make. Think of a reshaped, OCP-compliant system that instead would have accommodated that new feature as an extension of the existing code. Expend at least some effort to move your system in that direction.
+
 Seek to create smaller, single-purpose classes. They're easier to work with (test, understand, change), and easier to close.
 
 Seek to close classes. They're something you can consider "out of sight, out of mind." The goal is to have less code that you must concern yourself with.
@@ -507,10 +588,11 @@ You could choose to retain whatever tests you had in place for HoldingService. W
 
 However, you can also distribute the testing as well. Yes, the individual fine policies aren't publicly exposed to the ultimate client, and might be considered "private behavior." But the policies are also isolated, closed concepts that can be reused&mdash;and more easily tested than within the larger context of HoldingService. They are also public in the sense that they could conceivably be consumed by a different client. Without focused unit tests, this wouldn't be possible.
 
-
 We avoid testing implementation details. We test the outcomes of (small) behavioral concepts instead. Small closed units should be concepts that can be moved about and work in any context where they're useful. A days-late fine policy can be tested in isolation without exposing any implementation specifics. It is a "sub-behavioral unit."
 
 Corollary: If you extract to a small, single purpose class, but don't view it as at all useful in any other possible context, don't make it publicly accessible. You'll still need to write tests that indirectly involve these classes at a higher, useful-publicly level. Test such private details only as a last resort.
+
+Our new fine strategy took less than 20 minutes to test-drive&mdash;we created both unit tests and the production code in that time. We didn't have to worry about changing tests for, or adding tests to, an existing class.
 
 ---
 
