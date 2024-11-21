@@ -66,7 +66,7 @@ describe('addWord', ()  => {
   it('does nothing if already added', async () => {
     loadDefinition('orange', orangeDefinition)
 
-    const word = await definition('orange')
+    const word = definition('orange')
 
     expect(word).toEqual(orangeDefinition)
     expect(retrieveWord).not.toHaveBeenCalled()
@@ -104,3 +104,45 @@ You will likely recognize that we're describing a single-responsibility principl
 Had we adhered to a cohesive solution, we might have found it a bit easier to build the solution in the first place. We'd also have been ready to immediately accommodate changes, rather than have to pre-factor our code to support the change.
 
 We'll refactor the code now, to demonstrate how a cohesive solution increases the clarity of the code.
+
+```
+import { retrieveWord } from '../prompts/languageClient.js'
+import * as Data from '../persistence/database.js'
+
+export const clearWords = () =>
+  Data.deleteAll()
+
+export const loadDefinition = (word, definition) =>
+  Data.add(word, definition)
+
+export const addWord = async word => {
+  if (Data.containsKey(word)) return
+
+  const definition = await retrieveWord(word)
+  Data.add(word, { word, ...definition})
+}
+
+export const definition = word => Data.get(word)
+
+export const allDefinitions = () => Data.allValues()
+```
+
+The implementation specifics around JavaScript objects have been replaced with abstractions: `add`, `get`, `allValues`, `containsKey`, and `deleteAll`. The underlying implementation could change from an object, to a list, to interaction with a key-value store. The now-cohesive `words` module wouldn't be impacted by these changes.
+
+The module `database.js` focuses on implementing those abstract concepts:
+
+```
+const data = {}
+
+export const containsKey = key => data[key]
+
+export const deleteAll = () =>
+  Object.keys(data).forEach(key => delete data[key])
+
+export const add = (key, value) =>
+  data[key] = value
+
+export const get = word => data[word]
+
+export const allValues = () => Object.values(data)
+```
