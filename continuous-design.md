@@ -42,7 +42,7 @@ If our flashcard app's code is convoluted, poorly organized, with opaque names f
 
 Each design choice we make impacts the cost for future choices. We succeed only if we consider the design impact of each choice. We refer to this critical concept as *continuous design*.
 
-## 
+## Sailing on the Four C's of Clean Code
 
 An Unclean Code© system makes it harder to:
 
@@ -53,9 +53,18 @@ An Unclean Code© system makes it harder to:
 
 You might recognize these characteristics from the Class Classes chapter.
 
-We have many design perspectives to help guide us toward a Clean Code system.
+We have many design perspectives to help guide us toward a Clean Code system. As we change our system, we continue to reflect on one or more of these perspectives&mdash;SOLID, code smells, simple design, design patterns, and others, including various one-off principles such as the law of Demeter or Tell-Don't-Ask.
 
-clarity:
+We'll try, as many before, to codify it all in a simple, hopefully memorable set of rules. Consider this YADP&mdash;Yet Another Design Perspective.
+
+Our four design considerations are:
+
+* clarity: The programmer's intents in the system are all clearly stated.
+* conciseness (concision?): The programmer's intents in the system are all implemented in a minimal amount of code.
+* cohesiveness: Each module in the system has a high level of cohesion&mdash;all its elements maximally relate to one another.
+* confirmability: All behaviors in the system can be easily tested, in a way that also provides "living documentation" of these capabilities to its developers.
+
+### Clarity
 
 Within a function, we (generally) can't name our statements or expressions, though we can certainly group them in a manner that allows the function itself to describe its intent.
 
