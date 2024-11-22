@@ -129,7 +129,7 @@ export const allDefinitions = () => Data.allValues()
 
 The implementation specifics around JavaScript objects have been replaced with abstractions: `add`, `get`, `allValues`, `containsKey`, and `deleteAll`. The underlying implementation could change from an object, to a list, to interaction with a key-value store. The now-cohesive `words` module wouldn't be impacted by these changes.
 
-The module `database.js` focuses on implementing those abstract concepts:
+The module `database.js` provides an abstract interface for persisting data, with nothing exported that betrays the underlying data structure. Future changes to its implementation don't impact other code in the system.
 
 ```
 const data = {}
