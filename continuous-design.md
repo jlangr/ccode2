@@ -160,6 +160,43 @@ clarity is:
 - finding things where you expect them
 - intention-revealing names [ not implementation-specific -- provide examples ]
 
+### Objections to Clarity
+
+Seasoned programmers have gathered numerous idioms across their years of development experience. One might argue that the following examples are immediately digestible by a good developer:
+
+```
+words.map(word => `"${word}"`).join(',')
+```
+
+```
+list.length === 1 ? word : `${word}s`
+```
+
+For an idiom to be recognized, we must fully scan the code in question, so that we don't misinterpret it. The following line of seemingly-idiomatic code should cause us pause:
+
+```
+for (let i = 0; i <= words.length; i++) {
+```
+
+... yet for many, it does not. That's not the idiom; this is:
+
+```
+for (let i = 0; i < words.length; i++) {
+```
+
+We use functional pipelines not because they're newer and cooler, we do so because they replace detail with declaration:
+
+```
+words.map(word => `"${word}"`).join(',')
+```
+
+Which, by the way, should suggest that you almost always should avoid in-line function declarations within a pipeline:
+
+```
+example here
+
+```
+
 ### editing
 
 
