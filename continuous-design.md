@@ -20,7 +20,7 @@ We can usually decompose end goals into a number of smaller behaviors, and somet
   * show the user the correct answer if their choice is incorrect
 * repeat the prior three steps for each question that the user chose incorrectly
 
-We might derive a number of alternate approaches. For example, the user might be able to continue selecting an answer for a single question until they get it correct; we might also present hints with each failed answer. We might also move from multiple choice to requiring a user to type in the actual noun form, for questions that the users gets correct.
+We might also take alternate approaches. For example, the user might be able to continue selecting an answer for a single question until they get it correct; we might also present hints with each failed answer. We might also move from multiple choice to requiring a user to type in the actual noun form, for questions that the users gets correct.
 
 If there are many design choices for an application itself, we have orders of magnitude more choices for implementing the software. No, that's not right. We have infinite choices. Most of those choices will be suboptimal.
 
@@ -28,13 +28,13 @@ The job of our product folks is to keep shaping the product to meet the perceive
 
 In turn, we are constantly reacting to such changes by shaping existing software. Code is reasonably unique: It must not only continuously present a design that demonstrates all current needs to date, but it must also accept that this design will need to be different tomorrow.
 
-We might be able to build a useful flashcard system in a short period of time, perhaps a few months. Shortly after release (a beta hopefully), users will demand more features and a simpler user experience. We are in business, great! But we are also returning to the current system's design&mdash;its codebase&mdash;adding new features that maybe no one ever considered before.
+We might be able to build a useful flashcard system in a short period of time, perhaps a few months. After an initial release, users will demand more features and a simpler user experience. We are in business, great! But we are also returning to the current system's design&mdash;its codebase&mdash;adding new features that maybe no one ever considered before.
 
 ## Continuous Design
 
-When it comes to making choices in software, we have only a few kinds of primary building materials: modules (classes), functions (methods), data references (variables), and statements/expressions. The first three of these materials can be named, thus providing us humans quick means of understanding where and what things are in the codebase.
+When it comes to making choices in software, we have only a few kinds of primary building blocks: modules (classes), functions (methods), data references (variables), and statements/expressions. The first three of these materials can be named, thus providing us humans quick means of understanding where and what things are in the codebase.
 
-How we choose to manage and organize these building materials to support crafting behavioral concepts is software design. Put another way, our system's design is thus the collection of choices we have made to this point in time.
+How we choose to manage and organize these building materials when coding behaviors is software design. Put another way, our system's design is the collection of choices we've made to this point in time.
 
 It is easily possible to make many bad choices when assembling these building materials, and in a very short matter of time to boot. Our flashcard app might still work, but at what cost to future change?
 
@@ -65,6 +65,106 @@ Our four design considerations are:
 * confirmability: All behaviors in the system can be easily tested, in a way that also provides "living documentation" of these capabilities to its developers.
 
 ### Clarity
+
+Getting code working is always our first step. We're challenged to add a small new piece of behavior to the code. We think about how we want to solve the problem for a small amount of time, then quickly splash some code into our editor. We whittle the code a bit until we finally manage to get it working, then move on to the next slice of logic needed.
+
+If we never had to read that code again, we might consider ourselves "done." Code complete, it ain't broke, and so we ain't gonna try'n fix what's already working. Why risk breaking things?
+
+The reality, however, is that we *will* have to read that code again when we're later required to change nuances of the logic we just coded. Or when we're asked "what does that code do in *this* case?" Or when we're required to add new behaviors that belong in the same module. For each of these needs, we want the code to be as clearly stated as possible. Anything unclear becomes a time suck.
+
+It might take you a half-minute or two to decipher all the nuances of the `retrieveWords` function:
+
+```
+export const retrieveWords = async words => {
+  const wordPrefix = words.length === 1 ? 'word' : 'words'
+  let wordList = "";
+  for (let i = 0; i < words.length; i++) {
+    const currentWord = words[i];
+    const quotedWord = '"' + currentWord + '"';
+    wordList += quotedWord;
+    if (i !== words.length - 1) {
+      wordList += ",";
+    }
+  }
+  const finalPrompt = `Given a list of English nouns, separated by commas, ` +
+    `provide appropriate Czech language information for the ${wordPrefix} ${wordList}`
+  const response = await sendPrompt(`${format} ${finalPrompt}`)
+  const startIndex = response.indexOf('[')
+  const endIndex = response.lastIndexOf(']') + 1
+  const jsonText = response.slice(startIndex, endIndex)
+  return JSON.parse(jsonText)
+}
+```
+
+This is not "bad" code, but it could easily be better.
+
+A continual focus on code clarity tells us to produce code that we can all consume quickly:
+
+```
+const sliceJSONArrayFrom = response => {
+  const startIndex = response.indexOf('[')
+  const endIndex = response.lastIndexOf(']') + 1
+  return response.slice(startIndex, endIndex)
+}
+
+const joinQuoted = words =>
+  words.map(word => `"${word}"`).join(',')
+
+const pluralizeIfMany = (word, list) =>
+  list.length === 1 ? word : `${word}s`
+
+export const retrieveWords = async words => {
+  const finalPrompt = `Given a list of English nouns, separated by commas, ` +
+    `provide appropriate Czech language information for the ` +
+    `${(pluralizeIfMany('word', words))} ${(joinQuoted(words))}`
+
+  const response = await sendPrompt(`${format} ${finalPrompt}`)
+
+  return JSON.parse(sliceJSONArrayFrom(response))
+}
+```
+
+If we're tasked with making changes to `retrieveWords`, understanding its overall intent and flow occurs quickly. The function initializes a `finalPrompt` as a long text string with a couple embedded elements:
+* either the text "word" or "words," depending on the size of the `words` array
+* a joined string of the quoted words in that array.
+
+We then retrieve a response as a result of sending a larger prompt string. Finally, we slice out the JSON text from the response string, then parse it.
+
+We can understand such a function in about 15 seconds; it is largely a statement of policy. The extracted functions represent concepts with enough semantic meaning imparted in their names. Each extracted function is implemented in one to three lines of code. If we needn't change any of those implementations, that's one to three lines of hidden detail we can ignore for now and maybe forever. If we do need to change a function, the streamlined policy declaration allows us to find it quickly, focus on a tiny bit of implementation detail, and get out without considering or changing any other code.
+
+## Editing Our Code
+
+Crafting code with high clarity demonstrates that you care enough about your teammates, and yourself, to spend a few moments to edit your code before moving on.
+
+As developers, we're good about getting things to work&mdash;our #1 job. We need to also remind ourselves that we're writers as well. Once we get our ideas onto paper, good writing demands that we revisit our spewage, and edit it to emphasize clarity.
+
+The sad fact is that we're *not* typically taught to edit our code. The vast majority of code out there shows it, and wastes copious amounts of your time as a result. [BOB's COMMENT ABOUT WTF's] "WTF is this code doing?"
+
+In fact, we're often told expressly *not* to edit code. "If it ain't broke, don't fix it." There's that lame, misleading mantra again. If other people can't make quick sense of your code, it *is* broken. If you picked up a poorly-written book, one that required you to re-read sentences and paragraphs just to make sense it, you'd consider it a bad book (we bet you had at least one of these at university). Maybe we should institute a review system for code.
+
+The mantra exists because we fear breaking things. Yes, code is a brittle material. It's pretty easy to make a dumb code mistake in just about any programming language and not even spot it. As a result, we're inclined to avoid cleaning things up, despite how easy it usually is.
+
+Fearing making changes to our code is a quality smell. There are simple paths to creating the controls needed to knowing, with every tiny change, whether or not we've broken already-working logic. Visit [REF] on test-driven development to learn how.
+
+## Quick Steps to Clarity
+
+* Extract implementation detail from multi-purpose functions into new functions with concise names
+* Move functions as appropriate to other modules and emphasize cohesion, so that readers find code where they might expect it
+* Replace comments with clear declarations
+* 
+
+clarity is:
+
+- no comments
+- scannability
+- finding things where you expect them
+- intention-revealing names [ not implementation-specific -- provide examples ]
+
+### editing
+
+
+
+
 
 Within a function, we (generally) can't name our statements or expressions, though we can certainly group them in a manner that allows the function itself to describe its intent.
 
