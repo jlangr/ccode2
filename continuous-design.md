@@ -190,7 +190,44 @@ We use functional pipelines not because they're newer and cooler, we do so becau
 words.map(word => `"${word}"`).join(',')
 ```
 
-Which, by the way, should suggest that you almost always should avoid in-line function declarations within a pipeline:
+While we can add in-line functions to a pipeline:
+
+```
+const mostExpensiveHighlyRatedBookInEachCategory = (books) => {
+  const result = books.flatMap(category => {
+    return category.books
+      .filter(book => book.rating > 4.0)
+      .sort((a, b) => b.price - a.price)
+      .find(() => true)
+      .map(book => ({ category: category.category, title: book.title
+      }));
+  }).filter(result => result.title !== null);
+  return result
+}
+```
+... they break the flow, and require careful stepwise reading. Replacing even the small inline functions with predicates does wonders for the ability to quickly follow the entire flow:
+
+```
+const mostExpensiveHighlyRatedBookInEachCategory = (books) => {
+  const byPrice = (a, b) => b.price - a.price
+  const highlyRated = book => book.rating > 4.0
+  const hasTitle = book => book.title !== null
+
+  return books.flatMap(category =>
+    category.books
+      .filter(highlyRated)
+      .sort(byPrice)
+      .slice(0, 1)
+      .map(book => ({ category: category.category, title: book.title }))
+  ).filter(hasTitle);
+}
+```
+
+Here is a data structure, a list of objects each representing language information for a single noun.
+
+Create a pipe
+
+
 
 ```
 example here
