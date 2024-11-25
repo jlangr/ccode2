@@ -172,7 +172,7 @@ words.map(word => `"${word}"`).join(',')
 list.length === 1 ? word : `${word}s`
 ```
 
-For an idiom to be recognized, we must fully scan the code in question, so that we don't misinterpret it. The following line of seemingly-idiomatic code should cause us pause:
+But for an idiom to be recognized, we must fully scan the code in question, so that we don't misinterpret it. The following line of seemingly-idiomatic code should cause us pause:
 
 ```
 for (let i = 0; i <= words.length; i++) {
@@ -184,13 +184,17 @@ for (let i = 0; i <= words.length; i++) {
 for (let i = 0; i < words.length; i++) {
 ```
 
+The first `for` loop is likely a defect.
+
 We use functional pipelines not because they're newer and cooler, we do so because they replace detail with declaration:
 
 ```
 words.map(word => `"${word}"`).join(',')
 ```
 
-While we can add in-line functions to a pipeline:
+We also do so because it's a little bit harder to create dumb defects with them (like we did with the `for` loop).
+
+While it's reasonable to code short, potentially idiomatic in-line functions within a pipeline:
 
 ```
 const mostExpensiveHighlyRatedBookInEachCategory = (books) => {
@@ -223,16 +227,7 @@ const mostExpensiveHighlyRatedBookInEachCategory = (books) => {
 }
 ```
 
-Here is a data structure, a list of objects each representing language information for a single noun.
-
-Create a pipe
-
-
-
-```
-example here
-
-```
+And once again, as is usual when extracting functions, we find misplaced logic. A couple functions here might find better homes in a `book` module.
 
 ### editing
 
