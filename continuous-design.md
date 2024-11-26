@@ -64,13 +64,15 @@ Our four design considerations are:
 * cohesiveness: Each module in the system has a high level of cohesion&mdash;all its elements maximally relate to one another.
 * confirmability: All behaviors in the system can be easily tested, in a way that also provides "living documentation" of these capabilities to its developers.
 
-### Clarity
+# Clarity
 
 Getting code working is always our first step. We're challenged to add a small new piece of behavior to the code. We think about how we want to solve the problem for a small amount of time, then quickly splash some code into our editor. We whittle the code a bit until we finally manage to get it working, then move on to the next slice of logic needed.
 
 If we never had to read that code again, we might consider ourselves "done." Code complete, it ain't broke, and so we ain't gonna try'n fix what's already working. Why risk breaking things?
 
-The reality, however, is that we *will* have to read that code again when we're later required to change nuances of the logic we just coded. Or when we're asked "what does that code do in *this* case?" Or when we're required to add new behaviors that belong in the same module. For each of these needs, we want the code to be as clearly stated as possible. Anything unclear becomes a time suck.
+The reality, however, is that we *will* have to read that code again when we're later required to change nuances of the logic we just coded. Or when we're asked "what does that code do in *this* case?" Or when we're required to add new behaviors that belong in the same module. Or in a half hour when we have to return to the code because it's not quite done yet.
+
+For each of these needs, we want the code to be as clearly stated as possible. Anything unclear becomes a time suck.
 
 It might take you a half-minute or two to decipher all the nuances of the `retrieveWords` function:
 
@@ -263,13 +265,86 @@ const mostExpensiveHighlyRatedBookInEachCategory = (books) => {
 
 Hmm. The updated solution contains an idiomatic expression: `.slice(0, 1)` returns the first element of an array (less idiomatic) or an empty array if the array is empty (yes idiomatic). We don't eliminate our idioms unless they're causing readers to come to a grinding halt. If so, we find a way to abstract them. (Here, we might create a `firstOrDefault` function to supplant the `slice` call.)
 
-Note that as we extract functions, we find misplaced logic. Typical. A couple functions here might find more appropriate homes in a `book` module.
+Note that as we extract functions, we find misplaced logic. Typical. A couple functions here might find more appropriate homes in a `book` module. [REF cohesion]
 
 ### editing
 
 
+## Conciseness
+
+A functional pipeline can provide code that is not only very clear, but also *concise*. Concise code requires the fewest possible tokens. Code that is maximally concise without consideration for clarity is *obfuscated*. The only legitimate time when we might deliberately obscure code is as part of a post-development deployment process (perhaps for compression or security interests), or as challenge/entertainment (see: https://www.ioccc.org).
+
+The absolute need for clarity means we must find a balance between conciseness and clarity. Finding the balance isn't tough, though: Lean on your teammates. They'll let you know the moment something doesn't make sense. Watch them read through your code, and it'll usually be obvious when they're struggling with your logic.
+
+Let's start with opposite examples, however&mdash;code that's clear but not concise. The following `generateCard` function, along with a couple helper functions, assembles a text-based flashcard (complete with the answer on it, hm?).
+
+```
+// This function generates a random integer from 0 to n-1
+export const randomInt = n => {
+    const randomValue = Math.random(); // Generate a random decimal
+    const scaledValue = randomValue * n; // Scale the decimal to the desired range
+    const flooredValue = Math.floor(scaledValue); // Floor the value to get an integer
+    return flooredValue;
+}
+
+// This function returns a word in its plural form if needed
+const pluralizeIf = (word, isPlural) => {
+    if (isPlural) {
+        return `${word}s`; // Append 's' to make the word plural
+    } else {
+        return word; // Return the original word if not plural
+    }
+}
+
+// This function generates a prompt text for a language card game
+const generateCard = (adjectives, nouns) => {
+    // Select a random adjective and noun from the provided lists
+    const randomAdjectiveIndex = randomInt(adjectives.length);
+    const randomNounIndex = randomInt(nouns.length);
+    const adjective = adjectives[randomAdjectiveIndex];
+    const noun = nouns[randomNounIndex];
+
+    // Determine the case and number randomly
+    const nominativeOrAccusative = randomInt(2) === 0 ? 'nominative' : 'accusative';
+    const isPlural = randomInt(2) === 0;
+    const singularOrPlural = isPlural ? 'plural' : 'singular';
+
+    // Get the correct forms of the noun and adjective based on case and number
+    const correctNoun = noun[singularOrPlural][nominativeOrAccusative];
+    const nounGender = noun.gender.toLowerCase();
+    const correctAdjective = adjective[nominativeOrAccusative][singularOrPlural][nounGender];
+
+    // Construct the prompt text for the game card
+    const promptText = `Adjective: ${adjective.word}
+Noun: ${noun.word}
+
+Determine the ${singularOrPlural} ${nominativeOrAccusative} case.
+
+Correct answer: ${correctAdjective} ${correctNoun}`;
+
+    // Return the constructed prompt
+    return promptText;
+}
+```
+
+The code appears typical to us. The core function, `generateCard`, is a top-to-bottom affair. It's not terribly long, but includes comments to guide readers through what's happening in the next few statements. Each of the function's statements uses clear variable names and is readily comprehensible. We can carefully read through the code statement-by-statement, mentally assembling groups of statements into unit behaviors. What's not to like?
+
+Indeed, the above example is how many developers happily continue coding for most of their career. But it's suboptimal for numerous reasons.
+
+* duplication inherent
+* comments duplicate what code already states
+* time to comprehend / immediacy
+* flexibility
+* misplaced responsibilities
 
 
+
+
+Redundantly stating things.-- common repetitons.
+
+
+
+=====
 
 Within a function, we (generally) can't name our statements or expressions, though we can certainly group them in a manner that allows the function itself to describe its intent.
 
