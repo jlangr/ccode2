@@ -188,7 +188,7 @@ for (let i = 0; i < words.length; i++) {
 
 The first `for` loop is likely a defect.
 
-In any case, extracting small implementation details into intention-revealing functions streamlines code with `retrieveWords`:
+In any case, extracting small implementation details into intention-revealing functions streamlines code in `retrieveWords`:
 
 ```
 const joinQuoted = words =>
@@ -456,7 +456,7 @@ const hasTitle = book => {
 }
 ```
 
-Anti-idiom? Despite the fact that this construct demands **five previous freaking vertical source lines**, we usually digest it as a single chunk when we see it (because unfortunately we see it a lot). Sometimes we even spot that some chucklehead has reversed the order of the `true` and `false` returns.
+Anti-idiom? Despite the fact that this construct demands **five precious freaking vertical source lines**, we usually digest it as a single chunk when we see it (because unfortunately we see it a lot). Sometimes we even spot that some chucklehead has reversed the order of the `true` and `false` returns.
 
 We rarely say that things are flat-out wrong in programming, but this is one of those cases.
 
