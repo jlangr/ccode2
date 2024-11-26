@@ -367,7 +367,7 @@ const generateCard = (adjectives, nouns) => {
 }
 ```
 
-Clarity is increased in a few ways. Distilling `generateCard` into three top-level chunks allows us to quickly discern the overall policy: 
+Clarity is increased in a few ways. Distilling `generateCard` into three top-level chunks allows readers to quickly identify the overall policy: 
 * Generate random flash card elements using the adjectives and nouns passed in
 * Determine the correct answers to the challenge on the flash card by dereferencing the noun and adjective structures passed in
 * Return a formatted card containing all the relevant information
@@ -432,9 +432,85 @@ const generateCard = (adjectives, nouns) => {
 
 Slightly more-thoughtful data groupings make `generateCard` seem less of a haphazard bustle of wayward local variables. Each of its handful of steps emphasizes the key elements involved. We also reworked `selectAdjective` to accommodate a gender parameter instead of a noun. Our choice emphasizes that a noun's gender, specifically, is key to determining the proper adjective.
 
-### Redundancies
+### Code Duplication
 
-[ section on duplication ]
+Being concise in code means implementing concepts once and only once. We often find small chunks of implementation detail replicated through a module or codebase&mdash;usually from a couple to handful of lines that are oft repeated.
+
+```
+export const postItem = (request, response) => {
+  const itemDetails = retrieveItem(request.body.upc)
+  if (!itemDetails) {
+    response.status = 400
+    const errorMessage = 'unrecognized UPC code';
+    logError(errorMessage)
+    return response.send({error: errorMessage})
+  }
+
+  const checkout = Checkouts.retrieve(request.params.id)
+  if (!checkout) {
+    response.status = 400
+    const errorMessage = 'nonexistent checkout';
+    logError(errorMessage)
+    return response.send({error: errorMessage})
+  }
+
+  const newCheckoutItem = Checkouts.addItem(checkout, itemDetails)
+
+  sendResponse(response, newCheckoutItem, 201)
+}
+```
+
+Repetition increases costs for a number of reasons. The essence of the controller function `postItem` is obscured by repetitious error handling code. This duplication also decreases clarity, by mixing implementation details into policy flow.
+
+```
+const sendRequestError = (response, message) => {
+  response.status = 400
+  logError(errorMessage)
+  response.send({error: message})
+}
+
+export const postItem = (request, response) => {
+  const itemDetails = retrieveItem(request.body.upc)
+  if (!itemDetails)
+    return sendRequestError(response, 'unrecognized UPC code')
+
+  const checkout = Checkouts.retrieve(request.params.id)
+  if (!checkout)
+    return sendRequestError(response, 'nonexistent checkout')
+
+  const newCheckoutItem = Checkouts.addItem(checkout, itemDetails)
+
+  sendResponse(response, newCheckoutItem, 201)
+}
+```
+
+Most often, eliminating duplication is a matter of replacing concrete details with abstractions. It's generally a win-win-win-win situation (increased conciseness, clarity, ease of confirmability, and a springboard to increased cohesion), but we don't go overboard by obsessing over two lines of code that happen to look the same. We seek to find and eradicate duplicate implementations of concepts, not incidentally common lines of code.
+
+Duplication fosters many increases in cost/effort:
+
+* Time to read and comprehend cost
+* Time to search code in general (we're always wading through increased amounts of irrelevant results)
+* Time to test
+* Effort to find all points of change for a replicated concept
+* Risk of not finding all necessary points of change
+* Time to analyze whether variances found in duplicated code are deliberate or if they represent defects
+* Effort to change duplicated code
+* Cost to refactor code
+* Propagation of defect costs, when common code is defective
+
+* Cost to replace  dependency stuffs [ TODO ]
+
+We've worked on many systems that were two-to-three times as large as they might have been due to rampant code duplication. Oh, the days of getting paid by the line of code! (Just kidding. It never happened for any of us.)
+
+One example included an operating room scheduling system, which by definition needed to do a lot of work with dates. Among many other amusements, we found a common five-line piece of (old school) Java date handling logic. These five lines were repeated in over fifty places throughout the code. Add to our list of costs a dramatic increase in effort to replace one library with another.
+
+Extract-and-move is once again our trustworthy workhorse for beginning to tackle duplication problems:
+
+* Identify a clump of implementation detail that represents a singular concept
+* Extract it to a method.
+* Inspect and move to another module if appropriate.
+
+As awareness of that new module increases, we start to spot and eliminate more opportunities for its common use.
 
 ### Conciseness Nits
 
