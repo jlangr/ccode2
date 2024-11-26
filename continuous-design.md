@@ -162,7 +162,7 @@ clarity is:
 
 ### Objections to Clarity
 
-Seasoned programmers have gathered numerous idioms across their years of development experience. One might argue that the following examples are immediately digestible by a good developer:
+Seasoned programmers are able to immediately digest short code phrases. An experienced JavaScript developer can quickly comprehend the following couple of examples:
 
 ```
 words.map(word => `"${word}"`).join(',')
@@ -172,7 +172,7 @@ words.map(word => `"${word}"`).join(',')
 list.length === 1 ? word : `${word}s`
 ```
 
-But for an idiom to be recognized, we must fully scan the code in question, so that we don't misinterpret it. The following line of seemingly-idiomatic code should cause us pause:
+Such phrases still demand careful reading; we must mentally assemble the tokens involved into the behavioral concept they represent. A small potential for misinterpretation exists, as does a small potential for a defect. The following line of seemingly-idiomatic code should cause us pause:
 
 ```
 for (let i = 0; i <= words.length; i++) {
@@ -186,15 +186,47 @@ for (let i = 0; i < words.length; i++) {
 
 The first `for` loop is likely a defect.
 
+In any case, extracting small implementation details into intention-revealing functions streamlines code with `retrieveWords`:
+
+```
+const joinQuoted = words =>
+  words.map(word => `"${word}"`).join(',')
+
+const pluralizeIfMany = (word, list) =>
+  list.length === 1 ? word : `${word}s`
+  
+export const retrieveWords = async words => {
+  const finalPrompt = `Given a list of English nouns, separated by commas, ` +
+    `provide appropriate Czech language information for the ` +
+    `${(pluralizeIfMany('word', words))} ${(joinQuoted(words))}`
+    // ...
+```
+
+### Cleaner Pipelines
+
 We use functional pipelines not because they're newer and cooler, we do so because they replace detail with declaration:
 
 ```
 words.map(word => `"${word}"`).join(',')
 ```
 
-We also do so because it's a little bit harder to create dumb defects with them (like we did with the `for` loop).
+That's loads easier to understand than the old-school procedural equivalent:
 
-While it's reasonable to code short, potentially idiomatic in-line functions within a pipeline:
+```
+let wordList = "";
+for (let i = 0; i < words.length; i++) {
+  const currentWord = words[i];
+  const quotedWord = '"' + currentWord + '"';
+  wordList += quotedWord;
+  if (i !== words.length - 1) {
+    wordList += ",";
+  }
+}
+```
+
+The old school code has a dramatically increased possibility of hiding defects (hearken back to the `for` loop example).
+
+While it's reasonable to code short in-line functions within a pipeline:
 
 ```
 const mostExpensiveHighlyRatedBookInEachCategory = (books) => {
@@ -203,8 +235,7 @@ const mostExpensiveHighlyRatedBookInEachCategory = (books) => {
       .filter(book => book.rating > 4.0)
       .sort((a, b) => b.price - a.price)
       .find(() => true)
-      .map(book => ({ category: category.category, title: book.title
-      }));
+      .map(book => ({ category: category.category, title: book.title }));
   }).filter(result => result.title !== null);
   return result
 }
@@ -216,18 +247,23 @@ const mostExpensiveHighlyRatedBookInEachCategory = (books) => {
   const byPrice = (a, b) => b.price - a.price
   const highlyRated = book => book.rating > 4.0
   const hasTitle = book => book.title !== null
+  const categoryAndTitle = (book) =>
+    ({ category: category.category, title: book.title })
 
-  return books.flatMap(category =>
-    category.books
+  return books.flatMap(category => {
+    return category.books
       .filter(highlyRated)
       .sort(byPrice)
+      .map(categoryAndTitle)
       .slice(0, 1)
-      .map(book => ({ category: category.category, title: book.title }))
-  ).filter(hasTitle);
+  })
+    .filter(hasTitle)
 }
 ```
 
-And once again, as is usual when extracting functions, we find misplaced logic. A couple functions here might find better homes in a `book` module.
+Hmm. The updated solution contains an idiomatic expression: `.slice(0, 1)` returns the first element of an array (less idiomatic) or an empty array if the array is empty (yes idiomatic). We don't eliminate our idioms unless they're causing readers to come to a grinding halt. If so, we find a way to abstract them. (Here, we might create a `firstOrDefault` function to supplant the `slice` call.)
+
+Note that as we extract functions, we find misplaced logic. Typical. A couple functions here might find more appropriate homes in a `book` module.
 
 ### editing
 
