@@ -498,8 +498,6 @@ Duplication fosters many increases in cost/effort:
 * Cost to refactor code
 * Propagation of defect costs, when common code is defective
 
-* Cost to replace  dependency stuffs [ TODO ]
-
 We've worked on many systems that were two-to-three times as large as they might have been due to rampant code duplication. Oh, the days of getting paid by the line of code! (Just kidding. It never happened for any of us.)
 
 One example included an operating room scheduling system, which by definition needed to do a lot of work with dates. Among many other amusements, we found a common five-line piece of (old school) Java date handling logic. These five lines were repeated in over fifty places throughout the code. Add to our list of costs a dramatic increase in effort to replace one library with another.
@@ -507,7 +505,7 @@ One example included an operating room scheduling system, which by definition ne
 Extract-and-move is once again our trustworthy workhorse for beginning to tackle duplication problems:
 
 * Identify a clump of implementation detail that represents a singular concept
-* Extract it to a method.
+* Extract it to a function.
 * Inspect and move to another module if appropriate.
 
 As awareness of that new module increases, we start to spot and eliminate more opportunities for its common use.
@@ -532,7 +530,7 @@ const hasTitle = book => {
 }
 ```
 
-Anti-idiom? Despite the fact that this construct demands **five precious freaking vertical source lines**, we usually digest it as a single chunk when we see it (because unfortunately we see it a lot). Sometimes we even spot that some chucklehead has reversed the order of the `true` and `false` returns.
+Anti-idiom? Despite the fact that this construct demands **five precious vertical source lines**, we usually digest it as a single chunk when we see it (because unfortunately we see it a lot). Sometimes we even spot that some chucklehead has reversed the order of the `true` and `false` returns.
 
 We rarely say that things are flat-out wrong in programming, but this is one of those cases.
 
@@ -590,13 +588,360 @@ We get it, though, if you object on aesthetic grounds.
 
 We could dedicate an entire book to clutter in code. Most of it, however, you'll figure out on our own. We don't seek *clever* code; we instead seek *elegant* code. Elegant code says exactly what it needs, without too few or too many words. It is both clear and concise.
 
-
-
-
 ## Confirmability
 
+Our continuous design journey requires that we know what our code is intended to do. Without that knowledge, any change is unsafe. A system may contain many thousands of behavioral units. An unnoticed change in behavior to any one of them can allow us to unleash a costly defect in production.
+
+Fortunately, we can write thousands of small unit tests that verify whether we've created any regressions. These tests can tell us within seconds the moment we broke something. We'll need other kinds of tests at higher levels, of course, such as end-to-end functional tests, performance tests, load tests, and contract tests. But if we want to move fast, we need to be able to rapidly create and manage tests around the unit implementations.
+
+### Lack of Confirmability Degrades Design
+
+In contrast, the lack of such tests gradually slows us down. As the amount of (not unit tested) code increases, our costs to verify it increase. We can write integration tests, but they're generally costlier to build and maintain. They also create a slower feedback loop. Finally, it's unrealistic to expect that you'll be able to cover all the thousands of intentional decisions and logic variants that went into the codebase.
+
+Without fast feedback in the form of unit tests, we relegate ourselves to an "it ain't broke, don't fix it" mentality. Our codebase degrades by definition. We don't have the confidence to ensure the code remains cohesive, clear, and concise. Instead, we habitually slap out "first drafts" in our code: We get our code to work and immediately move onto the next thing without editing it.
+
+It seems fast at first, yet the results of fear-driven coding quickly become apparent in the codebase. Developers learn to do the worst possible thing to a system, rather than what they know to be the best thing for the system.
+
+A real example from a high-performance, historically-famous large system: Developers needed to create variants of behaviors existing within typically long (100+ line) C++ member functions. Shipping defective versions of these existing behaviors could cost the company millions of dollars per minute. 
+
+As a result, developers habitually *replicated* (i.e. copy 'n' pasted) entire member functions, then made their changes within these copies. They didn't change the original functions&mdash;no one wanted to be the one who broke code that was already working. ("Why did you even touch that code?")
+
+By definition, then, the fear significantly increased code duplication and costs as a result.
+
+### Conflated Units -> Tough Tests
+
+If we write code like the `postCheckoutTotal` function following, coming back and trying to figure out how to test it will be daunting:
+
+```
+export const postCheckoutTotal = (request, response) => {
+  const checkoutId = request.params.id
+  const checkout = Checkouts.retrieve(checkoutId)
+  if (!checkout) {
+    response.status = 400
+    response.send({error: 'nonexistent checkout'})
+    return
+  }
+
+  const messages = []
+  const discount = checkout.member ? checkout.discount : 0
+
+  let totalOfDiscountedItems = 0
+  let total = 0
+  let totalSaved = 0
+
+  checkout.items.forEach(item => {
+    let price = item.price
+    const isExempt = item.exempt
+    if (!isExempt && discount > 0) {
+      const discountAmount = discount * price
+      const discountedPrice = price * (1.0 - discount)
+
+      // add into total
+      totalOfDiscountedItems += discountedPrice
+
+      let text = item.description
+      // format percent
+      const amount = parseFloat((Math.round(price * 100) / 100).toString()).toFixed(2)
+      const amountWidth = amount.length
+
+      let textWidth = LineWidth - amountWidth
+      messages.push(pad(text, textWidth) + amount)
+
+      total += discountedPrice
+
+      // discount line
+      const discountFormatted = '-' + parseFloat((Math.round(discountAmount * 100) / 100).toString()).toFixed(2)
+      textWidth = LineWidth - discountFormatted.length
+      text = `   ${discount * 100}% mbr disc`
+      messages.push(`${pad(text, textWidth)}${discountFormatted}`)
+
+      totalSaved += discountAmount
+    }
+    else {
+      total += price
+      const text = item.description
+      const amount = parseFloat((Math.round(price * 100) / 100).toString()).toFixed(2)
+      const amountWidth = amount.length
+
+      const textWidth = LineWidth - amountWidth
+      messages.push(pad(text, textWidth) + amount)
+    }
+  })
+
+  total = Math.round(total * 100) / 100
+
+  // append total line
+  const formattedTotal = parseFloat((Math.round(total * 100) / 100).toString()).toFixed(2)
+  const formattedTotalWidth = formattedTotal.length
+  const textWidth = LineWidth - formattedTotalWidth
+  messages.push(pad('TOTAL', textWidth) + formattedTotal)
+
+  if (totalSaved > 0) {
+    const formattedTotal = parseFloat((Math.round(totalSaved * 100) / 100).toString()).toFixed(2)
+    console.log(`formattedTotal: ${formattedTotal}`)
+    const formattedTotalWidth = formattedTotal.length
+    const textWidth = LineWidth - formattedTotalWidth
+    messages.push(pad('*** You saved:', textWidth) + formattedTotal)
+  }
+
+  totalOfDiscountedItems = Math.round(totalOfDiscountedItems * 100) / 100
+
+  totalSaved = Math.round(totalSaved * 100) / 100
+
+  response.status = 200
+  // send total saved instead
+  response.send({ id: checkoutId, total, totalOfDiscountedItems, messages, totalSaved })
+}
+```
+
+Capturing all the nuances and writing tests for all relevant cases might take a few hours. There's a good possibility that we don't cover all the cases, also, which increases our risk of shipping defects.
+
+Much easier is to write small, simple tests as we craft the logic for assembling a checkout receipt. No doubt you can spot a few of the bits of duplication in the midst of `postCheckoutTotal`, as well as the number of opportunities for extracting conceptual units to new functions.
+
+Here's an improved solution, a work in progress.
+
+```
+const sendSuccessResponse = (response, body) => {
+  response.status = 200
+  response.send(body)
+}
+
+const sendErrorResponse = (response, message) => {
+  response.status = 400
+  response.send({ error: message })
+}
+
+export const postCheckoutTotal = (request, response) => {
+  const checkoutId = request.params.id
+  const checkout = Checkouts.retrieve(checkoutId)
+  if (!checkout) return sendErrorResponse(response, 'nonexistent checkout')
+
+  const { totals, messages } = createReceipt(checkout)
+
+  sendSuccessResponse(response, {
+    id: checkoutId,
+    messages,
+    total: round2(totals.total),
+    totalOfDiscountedItems: round2(totals.totalOfDiscountedItems),
+    totalSaved: round2(totals.totalSaved)
+  })
+}
+```
+
+The function `postCheckoutTotal`, now a declaration of policy, can be covered with a couple "end-to-end" tests.
+
+The module `receipt.js` exposes code that can be directly and easily unit-tested:
+
+```
+import { pad } from '../../util/stringutil'
+import { calculateTotal, calculateTotalOfDiscountedItems, calculateTotalSaved } from './checkout-model'
+
+const LineWidth = 45
+const Indent = `   `
+
+export const round2 = amount => Math.round(amount * 100) / 100
+
+const formatAmount = amount => parseFloat(round2(amount)).toFixed(2)
+
+const shouldApplyDiscount = (checkout, item) => !item.exempt && memberDiscountPct(checkout) > 0
+
+const calculateDiscountAmount = (checkout, item) => memberDiscountPct(checkout) * item.price
+
+const memberDiscountPct = checkout => checkout.member ? checkout.discount : 0
+
+const lineItem = (text, lineAmount) => {
+  const amount = formatAmount(lineAmount)
+  const amountWidth = amount.length
+  const textWidth = LineWidth - amountWidth
+  return pad(text, textWidth) + amount
+}
+
+export const createReceiptMessages = (checkout, totals) => {
+  const messages = []
+  checkout.items.forEach(item => {
+    messages.push(lineItem(item.description, item.price))
+    if (shouldApplyDiscount(checkout, item)) {
+      messages.push(lineItem(
+        `${Indent}${memberDiscountPct(checkout) * 100}% mbr disc`,
+        -calculateDiscountAmount(checkout, item)))
+    }
+  })
+  messages.push(lineItem('TOTAL', round2(totals.total)))
+  if (totals.totalSaved > 0)
+    messages.push(lineItem('*** You saved:', totals.totalSaved))
+  return messages
+}
+
+export const createReceipt = checkout => {
+  const totals = ({
+    total: calculateTotal(checkout),
+    totalSaved: calculateTotalSaved(checkout),
+    totalOfDiscountedItems: calculateTotalOfDiscountedItems(checkout)
+  })
+  return {
+    totals,
+    messages: createReceiptMessages(checkout, totals)
+  }
+}
+```
+
+Here's the final cohesive module, `checkout-model.js`:
+
+```
+export const calculateTotal = checkout => {
+  let total = 0
+  checkout.items.forEach(item => {
+    if (!item.exempt && (checkout.member ? checkout.discount : 0) > 0)
+      total += item.price * (1.0 - (checkout.member ? checkout.discount : 0))
+    else
+      total += item.price
+  })
+  return total
+}
+
+export const calculateTotalSaved = checkout => {
+  let totalSaved = 0
+  checkout.items.forEach(item => {
+    if (!item.exempt && (checkout.member ? checkout.discount : 0) > 0)
+      totalSaved += (checkout.member ? checkout.discount : 0) * item.price
+  })
+  return totalSaved
+}
+
+export const calculateTotalOfDiscountedItems = checkout =>
+  checkout.items
+    .filter(item => !item.exempt && (checkout.member ? checkout.discount : 0) > 0)
+    .reduce((total, item) => total + item.price * (1.0 - (checkout.member ? checkout.discount : 0)), 0)
+```
+
+Now isolated, we can focus on improving clarity and conciseness within these `calculate` functions. We can put tests in place in short order. It took ten minutes to create these tests for `calculateTotal`:
+
+```
+import {calculateTotal} from "./checkout-model";
+
+describe('calculate total', () => {
+  it('is zero when no items exist', () => {
+    const checkout = {
+      items: []
+    }
+
+    const result = calculateTotal(checkout)
+
+    expect(result).toBe(0)
+  })
+
+  it('is price of single undiscounted item', () => {
+    const checkout = {
+      items: [{ price: 42 }]
+    }
+
+    const result = calculateTotal(checkout)
+
+    expect(result).toBe(42)
+  })
+
+  it('discounts item when member attached to checkout and item not exempt', () => {
+    const checkout = {
+      member: {},
+      discount: 0.1,
+      items: [{
+        exempt: false,
+        price: 100
+      }]
+    }
+
+    const result = calculateTotal(checkout)
+
+    expect(result).toBe(90)
+  })
+
+  it('does not discount item when exempt', () => {
+    const checkout = {
+      member: {},
+      discount: 0.1,
+      items: [{
+        exempt: true,
+        price: 100
+      }]
+    }
+
+    const result = calculateTotal(checkout)
+
+    expect(result).toBe(100)
+  })
+
+  it('does not discount item when no member attached', () => {
+    const checkout = {
+      discount: 0.1,
+      items: [{
+        exempt: true,
+        price: 100
+      }]
+    }
+
+    const result = calculateTotal(checkout)
+
+    expect(result).toBe(100)
+  })
+
+  it('totals discounted and non-discounted items', () => {
+    const checkout = {
+      discount: 0.1,
+      member: {},
+      items: [
+        { exempt: true, price: 5 },
+        { exempt: true, price: 10 },
+        { exempt: false, price: 100 },
+        { exempt: false, price: 200 },
+      ]
+    }
+
+    const result = calculateTotal(checkout)
+
+    expect(result).toBe(5 + 10 + 90 + 180)
+  })
+})
+```
+
+The tests gave us the confidence to fearlessly refactor `calculateTotal` to a clearer solution:
+
+```
+const memberDiscountPct = checkout =>
+  checkout.member ? checkout.discount : 0
+
+const shouldApplyDiscount = (checkout, item) =>
+  !item.exempt && memberDiscountPct(checkout) > 0
+
+const calculateDiscountedPrice = (checkout, item) =>
+  item.price * (1.0 - memberDiscountPct(checkout))
+
+export const calculateTotal = checkout => {
+  const totalDiscountable = checkout.items
+    .filter(item => shouldApplyDiscount(checkout, item))
+    .reduce((total, item) => total + calculateDiscountedPrice(checkout, item), 0);
+  const totalNonDiscountable = checkout.items
+    .filter(item => !shouldApplyDiscount(checkout, item))
+    .reduce((total, item) => total + item.price, 0);
+  return totalDiscountable + totalNonDiscountable;
+}
+```
+
+It looks like our refactoring increased the lines of code, for `calculateTotal` at least. However, the overall number of lines in the module decrease by a handful after we made similar changes to the other calculation functions as well.
+
+### Small, Isolated Units -> Simple Tests
+
+
+
+
+
+By separating out `receipt.js`, we've also increased cohesion. The `postCheckoutTotal` function is primarily concerned with orchestrating the creation of a response to a request. It delegates the calculation specifics of assembling a receipt and totals to the `receipt.js` module 
+
+`receipt.js` still includes a few utility/helper functions that could be again moved, then tested in isolation (notably `round2` and `formatAmount`).
+
+##
+
 - tests afford and foster clarity, conciseness, and cohesiveness
-- no "ain't broke don't fix it"
+
 - interest in simpler testing promotes dependency minimization
 
 
@@ -617,6 +962,7 @@ programming is fundamentally a design activity and that the only final and true 
 namely that programming is fundamentally a design activity and that the only final and true representation of “the design” is the source code itselfnamely that programming is fundamentally a design activity and that the only final and true representation of “the design” is the source code itself
 
 
+## Cohesion
 
 We're building *czecher*, a flashcard application designed to help us ingrain challenging aspects of the Czech language. As a first step, we've created the module `words.js` to allow us to add new nouns to our collection of words to practice:
 
@@ -712,7 +1058,7 @@ The `words` module is our first incremental step toward an MVP. As a quick measu
 
 What's our continuous design report card look like? We get the following grades:
 
-* Clarity: pass. All the operations appear in short, JavaScript-idiomatic methods, without any C-for-Cleverness (for which we would immediately get a failing grade).
+* Clarity: pass. All the operations appear in short, JavaScript-idiomatic functions, without any C-for-Cleverness (for which we would immediately get a failing grade).
 * Confirmability: pass. All code was driven into existence by behavioral tests.
 * Conciseness: pass. The code seems about as short as it could get.
 * Cohesion: fail. What??
