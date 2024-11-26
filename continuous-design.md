@@ -330,18 +330,198 @@ Correct answer: ${correctAdjective} ${correctNoun}`;
 The code appears typical to us. The core function, `generateCard`, is a top-to-bottom affair. It's not terribly long, but includes comments to guide readers through what's happening in the next few statements. Each of the function's statements uses clear variable names and is readily comprehensible. We can carefully read through the code statement-by-statement, mentally assembling groups of statements into unit behaviors. What's not to like?
 
 Indeed, the above example is how many developers happily continue coding for most of their career. But it's suboptimal for numerous reasons.
+A reworked version results in a few more small helper functions:
 
-* duplication inherent
-* comments duplicate what code already states
-* time to comprehend / immediacy
-* flexibility
-* misplaced responsibilities
+```
+export const randomInt = n => Math.floor(Math.random() * n)
+
+const pluralizeIf = (word, isPlural) => isPlural ? `${word}s` : word
+
+const randomElement = (array) => array[randomInt(array.length)]
+
+const cases = ["nominative", "accusative"]
+const numbers = ["singular", "plural"]
+
+const generateRandomCardData = (adjectives, nouns) => ({
+  adjective: randomElement(adjectives),
+  noun: randomElement(nouns),
+  grammaticalCase: randomElement(cases),
+  number: randomElement(numbers)
+})
+
+const formatCard = (adjective, noun, number, grammaticalCase, correctAdjective, correctNoun) =>
+  `${adjective.word} ${pluralizeIf(noun.word, number === 'plural')}
+  
+  Provide the ${number} ${grammaticalCase} case.
+  
+  Correct answer: ${correctAdjective} ${correctNoun}
+`
+
+const generateCard = (adjectives, nouns) => {
+  const { adjective, noun, grammaticalCase, number } = generateRandomCardData(adjectives, nouns)
+
+  const correctNoun = noun[number][grammaticalCase]
+  const correctAdjective = adjective[grammaticalCase][number][noun.gender.toLowerCase()]
+
+  return formatCard(adjective, noun, number, grammaticalCase, correctAdjective, correctNoun)
+}
+```
+
+Clarity is increased in a few ways. Distilling `generateCard` into three top-level chunks allows us to quickly discern the overall policy: 
+* Generate random flash card elements using the adjectives and nouns passed in
+* Determine the correct answers to the challenge on the flash card by dereferencing the noun and adjective structures passed in
+* Return a formatted card containing all the relevant information
+
+We can immediately understand and trust each supporting function or piece of data in this solution. It's also likely that we don't even need to looked at most of the code most of the time. The separate functions enhance clarity by allowing us to focus on small, understandable chunks. And while it would help to see the data structures involved (individual `noun` and `adjective` objects specifically), every statement otherwise stands on its own. No statements demand a comment. Comments would only increase the development, comprehension, and maintenance costs for this code.
+
+As for understanding the data structures, that's what unit tests are for, albeit we might make a case for extracting a couple functions to get just an ounce more isolation from implementation specifics in `generateCard`: [REF]
+
+```
+const generateCard = (adjectives, nouns) => {
+  const { adjective, noun, grammaticalCase, number } = generateRandomCardData(adjectives, nouns)
+
+  const correctNoun = selectNoun(noun, number, grammaticalCase)
+  const correctAdjective = selectAdjective(adjective, grammaticalCase, number, noun)
+
+  return formatCard(adjective, noun, number, grammaticalCase, correctAdjective, correctNoun)
+}
+```
+
+We also spotted opportunities to emphasize cohesive elements, introducing a new abstraction&mdash;the notion of an object that captures the underlying data elements of a random card. Yet there's still something amiss with our function&mdash;the excessive number of parameters returned and passed about not only muddles the function, but also decreases its concision.
+
+Let's make a final cleanup pass.
+
+```
+const generateRandom = (adjectives, nouns) => ({
+  adjective: randomElement(adjectives),
+  noun: randomElement(nouns),
+})
+
+const formatCard = (phrase, caseAgreement, correctAdjective, correctNoun) =>
+  `${phrase.adjective.word} ${pluralizeIf(phrase.noun.word, caseAgreement.number === 'plural')}
+  
+  Provide the ${caseAgreement.number} ${caseAgreement.grammaticalCase} case.
+  
+  Correct answer: ${correctAdjective} ${correctNoun}
+`
+
+const selectNoun = (noun, caseAgreement) =>
+  noun[caseAgreement.number][caseAgreement.grammaticalCase]
+
+const selectAdjective = (adjective, gender, caseAgreement) =>
+  adjective[caseAgreement.grammaticalCase][caseAgreement.number][gender.toLowerCase()]
+
+const cases = ["nominative", "accusative"]
+const numbers = ["singular", "plural"]
+
+const generateCaseAgreementChallenge = () => ({
+  grammaticalCase: randomElement(cases),
+  number: randomElement(numbers)
+})
+
+const generateCard = (adjectives, nouns) => {
+  const phrase = generateRandom(adjectives, nouns)
+  const caseAgreement = generateCaseAgreementChallenge()
+
+  const correctAdjective = selectAdjective(phrase.adjective, phrase.noun.gender, caseAgreement)
+  const correctNoun = selectNoun(phrase.noun, caseAgreement)
+
+  return formatCard(phrase, caseAgreement, correctAdjective, correctNoun)
+}
+```
+
+Slightly more-thoughtful data groupings make `generateCard` seem less of a haphazard bustle of wayward local variables. Each of its handful of steps emphasizes the key elements involved. We also reworked `selectAdjective` to accommodate a gender parameter instead of a noun. Our choice emphasizes that a noun's gender, specifically, is key to determining the proper adjective.
+
+### Redundancies
+
+[ section on duplication ]
+
+### Conciseness Nits
+
+Every unnecessary token adds to the clutter of our code. We *can* and should often use things like idiomatic constructs and syntactic sugar to reduce the amount of unnecessary code that we must scan. A few pet nits of ours:
+
+#### Return Boolean Expressions
+
+Learning a language well not only means we learn its syntax, but that we also learn the most concise way of representing common concepts. Some of these streamlined constructs might go as far as to be classified as *idiomatic*. (Yes we've used that word a number of times; we guess we should finally define it.) Idiomatic code isn't obvious the first time you see it. A ternary operator isn't idiomatic: In an isolated context, it doesn't inherently provide all the information you need to decipher it. The second or third time you see it, however, you'll know how to interpret it. It's like riding a bicycle; you won't likely ever need to be reminded after that.
+
+Sometimes we see anti-idioms:
+
+```
+const hasTitle = book => {
+  if (book.title !== null) {
+    return true
+  } else {
+    return false
+  }
+}
+```
+
+Anti-idiom? Despite the fact that this construct demands **five previous freaking vertical source lines**, we usually digest it as a single chunk when we see it (because unfortunately we see it a lot). Sometimes we even spot that some chucklehead has reversed the order of the `true` and `false` returns.
+
+We rarely say that things are flat-out wrong in programming, but this is one of those cases.
+
+Simply (and we don't use that word lightly) return the boolean expression:
+
+```
+const hasTitle = book => book.title !== null
+```
+
+### Unnecessary Else
+
+Maybe we needn't embrace the ternary operator&mdash;worse things than `if-else` statements pollute our coding world&mdash;but if we're going to code a conditional `return`:
+
+```
+const pluralizeIf = (word, isPlural) => {
+  if (isPlural) {
+      return `${word}s`
+  } else {
+      return word
+  }
+}
+```
+
+... we should at least have the decency to not include the unnecessary `else` keyword. An early `return` suffices:
+
+```
+const pluralizeIf = (word, isPlural) => {
+  if (isPlural) {
+    return `${word}s`;
+  }
+  return word
+}
+```
+
+No, we really don't need the braces, though odds are good our team has adopted a coding standard that insists on them. But it's really just overprotective clutter. It's hard to mess up if you start with a short single-line `if` statement:
+
+```
+const pluralizeIf = (word, isPlural) => {
+  if (isPlural) return `${word}s`
+  return word
+}
+```
+
+We write tests if we remain worried.
+
+In any case, there's honestly not much good reason to eschew a ternary in this case.
+
+```
+const pluralizeIf = (word, isPlural) => isPlural ? `${word}s` : word
+```
+
+We get it, though, if you object on aesthetic grounds.
+
+### And So On
+
+We could dedicate an entire book to clutter in code. Most of it, however, you'll figure out on our own. We don't seek *clever* code; we instead seek *elegant* code. Elegant code says exactly what it needs, without too few or too many words. It is both clear and concise.
 
 
 
 
-Redundantly stating things.-- common repetitons.
+## Confirmability
 
+- tests afford and foster clarity, conciseness, and cohesiveness
+- no "ain't broke don't fix it"
+- interest in simpler testing promotes dependency minimization
 
 
 =====
@@ -510,3 +690,37 @@ export const get = word => data[word]
 
 export const allValues = () => Object.values(data)
 ```
+
+## Up-Front Design
+
+## Design Sketches / Models -- Speculative Design
+
+## Where Is the Design Daily
+
+## Where Is the Design Every Few Minutes
+
+TDD + cleanup
+
+## Where Is the Design Every Time We Plan?
+
+estimates anyone--they demand a better understanding of scope, and maybe some level of speculative design
+
+##  Confirmability
+
+TDD -- tests first.
+
+If we have a hard time writing a test, our code is not easily confirmable.
+
+code written first:
+- dense
+- much intertwining of concerns-- demands large setup of context/data
+- hard to piece out all the intents (tests written later)
+- private dependencies
+
+Cohesive code: small, single purpose modules easier to write tests for.
+
+Minimize the intertwining of stateful dependencies
+
+## Cohesiveness
+
+point a lot to the clean classes chapter
