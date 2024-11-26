@@ -60,7 +60,7 @@ We'll try, as many before, to codify it all in a simple, hopefully memorable set
 Our four design considerations are:
 
 * clarity: The programmer's intents in the system are all clearly stated.
-* conciseness (concision?): The programmer's intents in the system are all implemented in a minimal amount of code.
+* concision: The programmer's intents in the system are implemented in a minimal amount of code.
 * cohesiveness: Each module in the system has a high level of cohesion&mdash;all its elements maximally relate to one another.
 * confirmability: All behaviors in the system can be easily tested, in a way that also provides "living documentation" of these capabilities to its developers.
 
@@ -162,7 +162,7 @@ clarity is:
 - finding things where you expect them
 - intention-revealing names [ not implementation-specific -- provide examples ]
 
-### Objections to Clarity
+## Objections to Clarity
 
 Seasoned programmers are able to immediately digest short code phrases. An experienced JavaScript developer can quickly comprehend the following couple of examples:
 
@@ -204,7 +204,7 @@ export const retrieveWords = async words => {
     // ...
 ```
 
-### Cleaner Pipelines
+## Declare Intent, Don't Ooze Details
 
 We use functional pipelines not because they're newer and cooler, we do so because they replace detail with declaration:
 
@@ -212,7 +212,7 @@ We use functional pipelines not because they're newer and cooler, we do so becau
 words.map(word => `"${word}"`).join(',')
 ```
 
-That's loads easier to understand than the old-school procedural equivalent:
+That's loads easier to follow than the old-school procedural equivalent:
 
 ```
 let wordList = "";
@@ -227,6 +227,8 @@ for (let i = 0; i < words.length; i++) {
 ```
 
 The old school code has a dramatically increased possibility of hiding defects (hearken back to the `for` loop example).
+
+## Keeping Pipelines Streamlined
 
 While it's reasonable to code short in-line functions within a pipeline:
 
@@ -270,7 +272,7 @@ Note that as we extract functions, we find misplaced logic. Typical. A couple fu
 ### editing
 
 
-## Conciseness
+# Conciseness
 
 A functional pipeline can provide code that is not only very clear, but also *concise*. Concise code requires the fewest possible tokens. Code that is maximally concise without consideration for clarity is *obfuscated*. The only legitimate time when we might deliberately obscure code is as part of a post-development deployment process (perhaps for compression or security interests), or as challenge/entertainment (see: https://www.ioccc.org).
 
@@ -387,7 +389,7 @@ const generateCard = (adjectives, nouns) => {
 }
 ```
 
-We also spotted opportunities to emphasize cohesive elements, introducing a new abstraction&mdash;the notion of an object that captures the underlying data elements of a random card. Yet there's still something amiss with our function&mdash;the excessive number of parameters returned and passed about not only muddles the function, but also decreases its concision.
+We also spotted opportunities to emphasize cohesive elements, by introducing a new abstraction&mdash;the notion of an object that captures the underlying data elements of a random card. Yet there's still something amiss with our function&mdash;the excessive number of parameters returned and passed about not only muddles the function, but also decreases its concision.
 
 Let's make a final cleanup pass.
 
@@ -432,7 +434,7 @@ const generateCard = (adjectives, nouns) => {
 
 Slightly more-thoughtful data groupings make `generateCard` seem less of a haphazard bustle of wayward local variables. Each of its handful of steps emphasizes the key elements involved. We also reworked `selectAdjective` to accommodate a gender parameter instead of a noun. Our choice emphasizes that a noun's gender, specifically, is key to determining the proper adjective.
 
-### Code Duplication
+## Code Duplication
 
 Being concise in code means implementing concepts once and only once. We often find small chunks of implementation detail replicated through a module or codebase&mdash;usually from a couple to handful of lines that are oft repeated.
 
@@ -510,7 +512,7 @@ Extract-and-move is once again our trustworthy workhorse for beginning to tackle
 
 As awareness of that new module increases, we start to spot and eliminate more opportunities for its common use.
 
-### Conciseness Nits
+## Conciseness Nits
 
 Every unnecessary token adds to the clutter of our code. We *can* and should often use things like idiomatic constructs and syntactic sugar to reduce the amount of unnecessary code that we must scan. A few pet nits of ours:
 
@@ -588,7 +590,7 @@ We get it, though, if you object on aesthetic grounds.
 
 We could dedicate an entire book to clutter in code. Most of it, however, you'll figure out on our own. We don't seek *clever* code; we instead seek *elegant* code. Elegant code says exactly what it needs, without too few or too many words. It is both clear and concise.
 
-## Confirmability
+# Confirmability
 
 Our continuous design journey requires that we know what our code is intended to do. Without that knowledge, any change is unsafe. A system may contain many thousands of behavioral units. An unnoticed change in behavior to any one of them can allow us to unleash a costly defect in production.
 
@@ -608,7 +610,7 @@ As a result, developers habitually *replicated* (i.e. copy 'n' pasted) entire me
 
 By definition, then, the fear significantly increased code duplication and costs as a result.
 
-### Conflated Units -> Tough Tests
+## Conflated Units -> Tough Tests
 
 If we write code like the `postCheckoutTotal` function following, coming back and trying to figure out how to test it will be daunting:
 
@@ -695,6 +697,8 @@ export const postCheckoutTotal = (request, response) => {
 ```
 
 Capturing all the nuances and writing tests for all relevant cases might take a few hours. There's a good possibility that we don't cover all the cases, also, which increases our risk of shipping defects.
+
+## Small, Isolated Units -> Simple Tests
 
 Much easier is to write small, simple tests as we craft the logic for assembling a checkout receipt. No doubt you can spot a few of the bits of duplication in the midst of `postCheckoutTotal`, as well as the number of opportunities for extracting conceptual units to new functions.
 
@@ -784,6 +788,10 @@ export const createReceipt = checkout => {
   }
 }
 ```
+
+By separating out `receipt.js`, we've also increased cohesion. The `postCheckoutTotal` function is primarily concerned with orchestrating the creation of a response to a request. It delegates the calculation specifics of assembling a receipt and totals to the `receipt.js` module
+
+`receipt.js` still includes a few utility/helper functions that could be again moved, then tested in isolation (notably `round2` and `formatAmount`).
 
 Here's the final cohesive module, `checkout-model.js`:
 
@@ -928,41 +936,17 @@ export const calculateTotal = checkout => {
 
 It looks like our refactoring increased the lines of code, for `calculateTotal` at least. However, the overall number of lines in the module decrease by a handful after we made similar changes to the other calculation functions as well.
 
-### Small, Isolated Units -> Simple Tests
 
-
-
-
-
-By separating out `receipt.js`, we've also increased cohesion. The `postCheckoutTotal` function is primarily concerned with orchestrating the creation of a response to a request. It delegates the calculation specifics of assembling a receipt and totals to the `receipt.js` module 
-
-`receipt.js` still includes a few utility/helper functions that could be again moved, then tested in isolation (notably `round2` and `formatAmount`).
-
-##
-
-- tests afford and foster clarity, conciseness, and cohesiveness
+## Dependencies and Testing
 
 - interest in simpler testing promotes dependency minimization
 
 
-=====
-
-Within a function, we (generally) can't name our statements or expressions, though we can certainly group them in a manner that allows the function itself to describe its intent.
-
-Software is unlike most other human-crafted products, in that its design can continue to change
-
-## Speculative Design
-
-These bigger goals (e.g., "show me a random list of flashcards for ) 
-
-Our software itself&mdash;the code and other specifics of a system's implementation. 
-
-programming is fundamentally a design activity and that the only final and true representation of “the design” is the source code itself
-
-namely that programming is fundamentally a design activity and that the only final and true representation of “the design” is the source code itselfnamely that programming is fundamentally a design activity and that the only final and true representation of “the design” is the source code itself
-
-
 ## Cohesion
+
+It was nearly impossible to get to this last C-criteria for design without involving talk of cohesion. Our continuous design criteria necessarily intertwine to support each other, and at times can be at odds with one another. Increasing clarity might require diminishing conciseness, for example.
+
+But here we are, and cohesion deserves its own focused discussion.
 
 We're building *czecher*, a flashcard application designed to help us ingrain challenging aspects of the Czech language. As a first step, we've created the module `words.js` to allow us to add new nouns to our collection of words to practice:
 
@@ -1127,9 +1111,10 @@ TDD + cleanup
 
 estimates anyone--they demand a better understanding of scope, and maybe some level of speculative design
 
-##  Confirmability
 
-TDD -- tests first.
+
+
+##  Confirmability
 
 If we have a hard time writing a test, our code is not easily confirmable.
 
@@ -1143,6 +1128,20 @@ Cohesive code: small, single purpose modules easier to write tests for.
 
 Minimize the intertwining of stateful dependencies
 
-## Cohesiveness
 
-point a lot to the clean classes chapter
+
+=====
+
+Within a function, we (generally) can't name our statements or expressions, though we can certainly group them in a manner that allows the function itself to describe its intent.
+
+Software is unlike most other human-crafted products, in that its design can continue to change
+
+## Speculative Design
+
+These bigger goals (e.g., "show me a random list of flashcards for )
+
+Our software itself&mdash;the code and other specifics of a system's implementation.
+
+programming is fundamentally a design activity and that the only final and true representation of “the design” is the source code itself
+
+namely that programming is fundamentally a design activity and that the only final and true representation of “the design” is the source code itselfnamely that programming is fundamentally a design activity and that the only final and true representation of “the design” is the source code itself
