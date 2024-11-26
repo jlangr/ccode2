@@ -1,6 +1,6 @@
 # Continuous Design
 
-Product owners (and others responsible for helping define a software product) determine the set of end goals that a system must accomplish for its users. Developers in turn build support for each of these goals in the system, in the form of code and configuration. As Jack W. Reeves taught us over three decades ago, this code (and configuration, but let's make it simpler by talk only about code here on out) is the ultimate and definitive representation of "the design." [REFERENCE here]
+Product owners (and others responsible for helping define a software product) determine the set of end goals that a system must accomplish for its users. Developers in turn build support for each of these goals in the system, in the form of code and configuration. As Jack W. Reeves taught us over three decades ago, this code is the ultimate and definitive representation of "the design." (Configuration,which can of course be in the form of code itself, is usually also a critical piece of the design, but let's make it simpler by talking only about code here on out.) [REFERENCE here]
 
 The word *design* has two primary meanings:
 
@@ -22,13 +22,13 @@ We can usually decompose end goals into a number of smaller behaviors, and somet
 
 We might also take alternate approaches. For example, the user might be able to continue selecting an answer for a single question until they get it correct; we might also present hints with each failed answer. We might also move from multiple choice to requiring a user to type in the actual noun form, for questions that the users gets correct.
 
-If there are many design choices for an application itself, we have orders of magnitude more choices for implementing the software. No, that's not right. We have infinite choices. Most of those choices will be suboptimal.
+If there are many design choices for an application itself, we have orders of magnitude more choices for how we write the underlying code. No, that's not right. We have infinite choices. Most of those choices will be suboptimal.
 
 The job of our product folks is to keep shaping the product to meet the perceived needs of its marketplace of users. Most software product continues to demand constant change in the form of new needs and variants on or enhancements to existing needs.
 
 In turn, we are constantly reacting to such changes by shaping existing software. Code is reasonably unique: It must not only continuously present a design that demonstrates all current needs to date, but it must also accept that this design will need to be different tomorrow.
 
-We might be able to build a useful flashcard system in a short period of time, perhaps a few months. After an initial release, users will demand more features and a simpler user experience. We are in business, great! But we are also returning to the current system's design&mdash;its codebase&mdash;adding new features that maybe no one ever considered before.
+We might be able to build a slick, useful flashcard system in a short period of time, perhaps a month or two. After an initial release, users will demand new behaviors. We're selling new features, great! But we must also continuously return to the current system's inherent design&mdash;its codebase&mdash. In order to add new features, we're forced to figure out how to accommodate new concepts into the existing design, things that might have never been considered before.
 
 ## Continuous Design
 
@@ -38,7 +38,7 @@ How we choose to manage and organize these building materials when coding behavi
 
 It is easily possible to make many bad choices when assembling these building materials, and in a very short matter of time to boot. Our flashcard app might still work, but at what cost to future change?
 
-If our flashcard app's code is convoluted, poorly organized, with opaque names for its elements, accommodating new needs will be slow. We will expend too much time navigating the code to find where all the places it might need to be changed. Once we find those locations (plural), we will expend too much time understanding what the current code does. We will then expend too much time carefully inserting our changes, then ensuring that all the existing behaviors still work.
+If our flashcard app's code is convoluted, poorly organized, with opaque names for its elements, accommodating new needs will be slow. We'll expend too much time navigating code to find all the places it must change. Once we find those locations (usually plural), we'll expend too much time understanding what the current code does. We'll then expend too much time carefully inserting our changes and ensuring that all the existing behaviors remain unbroken.
 
 Each design choice we make impacts the cost for future choices. We succeed only if we consider the design impact of each choice. We refer to this critical concept as *continuous design*.
 
