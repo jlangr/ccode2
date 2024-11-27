@@ -956,7 +956,7 @@ But here we are, and cohesion deserves its own focused discussion.
 We're building *czecher*, a flashcard application designed to help us ingrain challenging aspects of the Czech language. As a first step, we've created the module `words.js` to allow us to add new nouns to our collection of words to practice:
 
 ```
-import { retrieveWord } from '../prompts/languageClient.js'
+import { retrieveWord } from '../prompts/languageClient'
 
 const definitions = {}
 
@@ -1047,22 +1047,22 @@ The `words` module is our first incremental step toward an MVP. As a quick measu
 
 What's our continuous design report card look like? We get the following grades:
 
-* Clarity: pass. All the operations appear in short, JavaScript-idiomatic functions, without any C-for-Cleverness (for which we would immediately get a failing grade).
+* Clarity: pass. All the operations appear in short, JavaScript-idiomatic functions, without any C-for-Cleverness (for which we would immediately get a failing mark).
 * Confirmability: pass. All code was driven into existence by behavioral tests.
 * Conciseness: pass. The code seems about as short as it could get.
-* Cohesion: fail. What??
+* Cohesion: fail. Wait, fail?
 
-Our intent is to replace the JavaScript object with a proper persistence mechanism. Unfortunately, we've mired our little bit of definition-management logic with how we intend to store the definitions. When we do change, we'll have to open up the `words` module and poke through most of its methods to update implementations.
+Our intent is to replace the JavaScript object with a proper persistence mechanism. Unfortunately, we've conflated our little bit of *definition-management logic* with logic supporting *storage of the definitions*. When we do change, we'll have to open up the `words` module and poke through most of its methods to update implementations.
 
-You will likely recognize that we're describing a single-responsibility principle (SRP) violation. The both say the same thing, minus some nuances. Cohesion is how well the elements of a module align to the same purpose.
+You'll likely recognize that we're describing a single-responsibility principle (SRP) violation. SRP and cohesion both say the same thing, minus some nuances. Cohesion is how well the elements of a module align to the same purpose.
 
 Had we adhered to a cohesive solution, we might have found it a bit easier to build the solution in the first place. We'd also have been ready to immediately accommodate changes, rather than have to pre-factor our code to support the change.
 
 We'll refactor the code now, to demonstrate how a cohesive solution increases the clarity of the code.
 
 ```
-import { retrieveWord } from '../prompts/languageClient.js'
-import * as Data from '../persistence/database.js'
+import { retrieveWord } from '../prompts/languageClient'
+import * as Data from '../persistence/database'
 
 export const clearWords = () =>
   Data.deleteAll()
@@ -1084,7 +1084,7 @@ export const allDefinitions = () => Data.allValues()
 
 The implementation specifics around JavaScript objects have been replaced with abstractions: `add`, `get`, `allValues`, `containsKey`, and `deleteAll`. The underlying implementation could change from an object, to a list, to interaction with a key-value store. The now-cohesive `words` module wouldn't be impacted by these changes.
 
-The module `database.js` provides an abstract interface for persisting data, with nothing exported that betrays the underlying data structure. Future changes to its implementation don't impact other code in the system.
+The module `database.js` provides an interface that abstracts the notion for persisting data, with nothing exported that betrays the underlying data structure. Future changes to its implementation don't impact other code in the system.
 
 ```
 const data = {}
@@ -1102,22 +1102,55 @@ export const get = word => data[word]
 export const allValues = () => Object.values(data)
 ```
 
+# When Else do We Design?
+
+With a continuous design mentality, we seek to keep costs low by reviewing our code's adherence to the four C's, a collection of code criteria that we can continuously consult. When do we do that? Why, continuously of course, or at least continually.
+
+But design isn't only a consideration for when we're writing production code. It's a... um... continuous effort throughout the lifetime of our projects and products.
+
 ## Up-Front Design
 
-## Design Sketches / Models -- Speculative Design
+We initiate a project by determining what new capabilities our product will bring to its users. Necessarily this requires some level of understanding about the design of the system&mdash;what does it accomplish and what are its constraints, for example.
 
-## Where Is the Design Daily
+As part of answering our analysis and design efforts, we might first produce summary diagrams that capture salient elements of the system's current design. We would then also create *speculative* sketches for what the design will need to look like in order to accommodate the desired new behaviors.
 
-## Where Is the Design Every Few Minutes
+Stakeholders usually want to know when the project will be done at this point in the planning process. Estimates are a design consideration: Not only must we have a sense of how much time it would take to develop a new feature, we must know the extent to which the current design resists the new feature. Ideally that amount is "zero," which can be true if we've adhered to the four C's well enough.
 
-TDD + cleanup
+The estimates themselves might feed back into the project plan. The powers that be may decide to remove or trim new needs due to unexpectedly high estimates. Given the updates to the desired scope, we reconsider the design and provide updated estimates for the stakeholders.
 
-## Where Is the Design Every Time We Plan?
+Our project estimates at this time are high-level, involving larger initiatives that might take weeks or months to complete. As we ready for development, we seek to slice these larger challenges ("epics," as some refer to them) into thinner pieces of work that we can start and deliver within shorter periods of time. An understanding of the system's design is once again required at this point, to ensure our ideals for slicing work align with the realities of the system.
 
-estimates anyone--they demand a better understanding of scope, and maybe some level of speculative design
+## Readying for Work
 
+As we ready to actually code a feature, the product folk (product owners, product managers, business analysts, UX designers, and others) are working to ensure they've captured all the actual specifics needed for us to being work. When they meet with us to describe the new feature, we ask questions, and we dig a bit again into the system's design.
 
+Sometimes we uncover the devil when the product people reveal the details for the feature. We discover that things aren't as ideal as we'd speculated earlier. It's also possible that the system has changed enough in the interim to make things more difficult.
 
+Sometimes we get answers to our questions that reveal hidden complexity. "Oh, I didn't think that would be a big deal." It might not be, from their perspective; from ours, it might be something that will be very difficult to fit into the existing design.
+
+## Starting Work
+
+We break down our work first into smaller behavioral units. If our work is to add support for adverbs to the Czecher app, we might break that effort into the following smaller slices:
+
+* Support adding a single adverb to the word list
+* Bulk-load a CSV file of adverbs
+* Add flash card examples containing adverbs
+
+Those slices might still be a little too large. We might split "support adding an adverb" into a few technical challenges:
+
+* Create and incorporate LLM prompt text to specify the format for adverbs
+* Add persistence support for adverbs
+* Rework card building logic to provide examples involving adverbs
+
+Such decomposition necessarily involves an awareness of design, and may also spur a discussion around how the current and/or speculative design must change.
+
+## Doing Work
+
+We write tests to drive in each unit behavior. A unit test describes the behavior and provides a "live" example demonstrating how clients interact with the system to effect that behavior. The test, as a result, is our primary mechanism for designing and documenting the interface to the system.
+
+For each test we write, we code the behavior that we hope realizes the need specified in the test. We run our tests, correcting the code (i.e. the design) until the tests pass. We revisit the coded behavior, and edit it for clarity, conciseness, and cohesion before moving onto the next test.
+
+Design is omnipresent.
 
 ##  Confirmability
 
