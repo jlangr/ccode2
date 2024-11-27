@@ -1,15 +1,15 @@
-In chapter [x], you learned how to best organize code statements and expressions in the form of functions or methods. [[ READ ]]
+In chapter [REF to functions chapter], you learned how to best organize code statements and expressions in the form of functions or methods.
 
 Hopefully the most useful things you learned are:
 
 * Functions provide a way to declare, invoke, and reuse pieces of logical behavior, or *concepts*.
 * While nothing prevents you from aggregating multiple concepts into a single function, you're much better off if you compose methods that capture small, discrete concepts.
 
-In this chapter, you'll hear echoes of the advice from chapter [x] at the next-up organizational construct: classes or modules.
+In this chapter, you'll hear echoes of the advice from chapter at the next-higher-up organizational construct: classes or modules.
 
 ## Classes and Modules vs. Files
 
-Your programming language allows you to group concepts into a single construct--a *class*, if you're coding with an object-oriented language, or perhaps a *module* if you program in a primarily functional language like JavaScript, Elixir, or F#.
+Your programming language allows you to group concepts into a single construct&mdash;a *class*, if you're coding with an object-oriented language, or perhaps a *module* if you program in a primarily functional language like JavaScript, Elixir, or F#.
 
 In some object-oriented languages, such as Java, a file can declare only a single, publicly available class. Other languages, such as C++, TypeScript, and Ruby, allow you to declare multiple classes within a single file.
 
@@ -61,21 +61,25 @@ Since, we extrapolated the claimed value of modularization, originally brought a
 
 Heuristics help you identify the steps to take, and also the steps to avoid, to arrive at well-designed classes:
 
-- **Positive heuristics**&mdash;steps to take. Kent Beck's four rules of emergent design[[ref]], for example, tell you to ensure that all code is testable as you go, to eliminate logical redundancies, to ensure all programmatic elements are clearly and concisely named, and to minimize overdesign.
-- **Negative heuristics**&mdash;steps to avoid. Anti-patterns describe bad paths to take while developing code. *Copy-paste programming," for example, tells us to not habitually create new logic by first duplicating existing code, then changing it. (A more-memorable name for this anti-pattern might be "grab and stab." Or "snatch and patch." Or "copy and corrupt." Or... Maybe that's enough for now. Don't do it.)
+- **Positive heuristics**&mdash;steps to take. Kent Beck's four rules of emergent design[^fn-simple-design], for example, tell you to ensure that all code is testable as you go, to eliminate logical redundancies, to ensure all programmatic elements are clearly and concisely named, and to minimize overdesign.
+- **Negative heuristics**&mdash;steps to avoid. Anti-patterns describe bad paths to take while developing code. *Copy-paste programming," for example, tells us to not habitually create new logic by first duplicating existing code, then changing it. (A more-memorable name for this anti-pattern might be "grab and stab." Or "snatch and patch." Or "copy and corrupt." Or... oh, that's enough for now. Just don't do it.)
+
+[^fn-simple-design]: https://martinfowler.com/bliki/BeckDesignRules.html 
 
 Characteristics help you assess the current quality of your classes.
 
 - **Positive characteristics**&mdash;desired traits. Bob Martin's collection of five class design principles, known as SOLID, have withstood around three decades of scrutiny, and can be practically applied to functional code as well.
-- **Negative characteristics**&mdash;undesired traits. Martin Fowler's code smells [ref] are a collection of things to avoid in code, each identified with a memorable name. *Shotgun surgery*, for example, indicates that your code demands that you frequently must update numerous classes in order to effect simple changes.
+- **Negative characteristics**&mdash;undesired traits. Martin Fowler's code smells[^fn-code-smells] are a collection of things to avoid in code, each identified with a memorable name. *Shotgun surgery*, for example, indicates that your code demands that you frequently must update numerous classes in order to effect simple changes.
+
+[^fn-code-smells]: https://martinfowler.com/bliki/CodeSmell.html
 
 Over time, folks in the software development arena have codified numerous collections of heuristics and characteristics. We'll refer to any of these as a *design perspective*.
 
-Design perspectives can describe design at both the method (micro) level and the class (macro) level (or even higher levels).
+Design perspectives can describe design at both the method (micro) level and the class (macro) level (or even higher levels). You might be able to consider some characteristics as heuristics, and vice versa; the categorization isn't terribly important.
 
-You might be able to consider some characteristics as heuristics, and vice versa. [ so what ] For much of this chapter, we'll focus on the *characteristics* of an ideally-sized class, because the idea is that you can glean them from looking at the code.
+For much of this chapter, we'll focus on the *characteristics* of an ideally-sized class, because the idea is that you can glean them from looking at the code.
 
-Such a class is typically small. Its name concisely summarizes the small numbers of behaviors gathered within. And it is defined cohesively [define]. As a result, the class exhibits the characteristic of adhering to the single-responsibility principle (SRP): It has one reason to change.
+Such an ideal class is typically small. Its name concisely summarizes the small numbers of behaviors gathered within. And it is defined cohesively: Its methods are closely related and focused, and it performs a single, well-defined task (or set of related tasks) effectively. As a result, the class exhibits the characteristic of adhering to the single-responsibility principle (SRP): It has one reason to change.
 
 Design perspectives most certainly overlap. Notably, outcomes for the more overarching perspectives&mdash;SOLID, Kent Beck's simple design, and Martin Fowler's code smells, for example&mdash;are comparable. Both foster small, cohesive modules and functions.
 
@@ -112,10 +116,9 @@ Why might a single-responsibility class be desirable?
 
 * Its name can concisely reflect the behaviors contained within, making those behaviors easier to locate
 * It creates real possibilities for re-use
-* Its likelihood of adhering to  and thus being closed to future changes increases (see the open-closed principle&mdash;OCP)
+* Its likelihood of adhering to the OCP, and thus being closed to future changes, increases
 * It's easier to test 
 * It makes your system more flexible
-* ... 
 
 Each of the behaviors in HoldingService implements a *policy*--a set of rules established by the library system and implemented in the code. The `dateDue` policy, for example, specifies that books are due 21 days after they are checked out and that DVDs are due 7 days after checkout.
 
@@ -125,15 +128,13 @@ Policies do change, and it's possible that the policy for check-outs might need 
 
 ASIDE: Creating new classes is surprisingly easy in an IDE, yet we often resist as developers. While we probably don't want the "ravioli" system where *every* class contains only one method, there's nothing wrong with tiny classes containing three, two, or one method.
 
-[ reword ] While the SRP tells us to be picky, it also doesn't tell us to speculate about the nexus of change. Your systems probably rampantly violate the SRP. Rather than go find code to change, wait for the next demand for change and ensure you take that opportunity to shape your system to be more compliant.
-
-**principle: Design flows from need.**
+While the SRP tells us to be picky, it also doesn't tell us to speculate about the nexus of change. Your systems probably rampantly violate the SRP. Rather than go find code to change, wait for the next demand for change and ensure you take that opportunity to shape your system to be more compliant.
 
 ## Code Policies ?
 
-For now, let's assume that the core library policies for check-in and check-out are stable. When change occurs, we'll deal with it&mdash;see [ref later in this chapter]. 
+Let's assume that the core library policies for check-in and check-out are stable.
 
-It's easy to think of multiple reasons for the as-defined HoldingService to potentially change. For example, the library now wants patrons to rent DVDs for a longer period&mfash;14 days instead of 7&mdash;because they're an older technology and in low demand nowadays. But is that a problem for HoldingService as currently implemented?
+It's easy to think of multiple reasons for the as-defined HoldingService to potentially change. For example, the library now wants patrons to rent DVDs for a longer period&mdash;14 days instead of 7&mdash;because they're an older technology and in low demand nowadays. But is that a problem for HoldingService as currently implemented?
 
 While looking at sketches can be very helpful, we can't spot all change reasons by looking at UML alone. 
 
@@ -152,14 +153,14 @@ public Date dateDue(String barCode) {
 
 Ahh, very nice. The service delegates responsibility to the Holding class, where its `dateDue` method presumably covers all the calculation details. The Holding class (or perhaps another class it depends on) absorbs such changes. The HoldingService class is isolated from them.
 
-"Managing date dues" at all is a responsibility that could disappear (some libraries have done it). If and when that occurs, we'll look to shield HoldingService from similar, subsequent changes.
+"Managing dates due" at all is a responsibility that could disappear, because some libraries have actually eliminated fines. If and when that occurs, we'll look to shield HoldingService from similar, subsequent changes.
 
 ## Where Reasons to Change Hide
 
-[intro sentence]
+Large classes tend to contain and obscure numerous responsibilities. Often, change reasons are buried within the body of a long method. Let's look at an example.
+
 The HoldingService method `checkIn` does a pretty good job of declaring the policy for returning materials:
 
-[v1]
 ```
 public int checkIn(String barCode, Date date, String branchScanCode) {
    var branch = new BranchService().find(branchScanCode);
@@ -180,7 +181,7 @@ public int checkIn(String barCode, Date date, String branchScanCode) {
 }
 ```
 
-The `checkIn` method still begs a bit of cleanup. One line of glaring implementation detail stands out as a potential problem&mdash;the `if` statement that determines whether the check-in is late:
+A reasonable method rich in policy, the `checkIn` method still begs a bit of cleanup. One line of glaring implementation detail stands out as a potential problem&mdash;the `if` statement that determines whether the check-in is late:
 
 ```
 if (holding.dateLastCheckedIn().after(holding.dateDue())) { // is it late?
@@ -200,7 +201,6 @@ The right way to fix the problem involves moving the specifics of "is it late" o
 
 Step one, however, is to abstract the concept of "is it late" to its own method. Yep&mdash;this notion of *extracting methods* should be familiar from the chapter on functions.
 
-[v2]
 ```
 public int checkIn(String barCode, Date date, String branchScanCode) {
    // ...
@@ -222,7 +222,6 @@ Going forward, if you feel you need a comment to guide readers through a line or
 
 Once isolated, the `isLate` method reveals a glaring code smell known as *feature envy*: The method, apparently envious of the `Holding` class, asks it multiple questions ("What's the date checked in? What's the date due?") in order to compute a result. It also shows disinterest in the HoldingService class on which it's defined. We can soothe the method's envy by moving it to the Holding class, where it can talk directly to its new peers:
 
-[v3]
 ```
 public class HoldingService {
 // ...
@@ -276,7 +275,6 @@ foundPatron.addFine(holding.calculateLateFine());
 
 Here's what `calculateLateFine` looks like in its new home:
 
-[v3]
 ```
 
 public int calculateLateFine() {
@@ -321,7 +319,6 @@ We'll prepare for the new requirement by first factoring the code so that the ch
 
 Each of the two switch branches calculates an appropriate `fine` value using one of two strategies. We can extract the tiny bits of calculation logic to a couple strategy classes, each implementing a common interface:
 
-[v4]
 ```
 public interface LateStrategy {
    int calculateFine(int daysLate);
@@ -389,7 +386,6 @@ Note that `calculateLateFine` first retrieves the material type (e.g. `BOOK`) fr
 
 Here's what MaterialType looks like:
 
-[v4]
 ```
 public enum MaterialType {
    BOOK(21, 10),
@@ -423,7 +419,6 @@ public enum MaterialType {
 
 If each material type can be initialized with the checkout period and late fine amounts, it can also be initialized with a strategy object:
 
-[v5]
 ```
 import domain.core.ConstrainedFineStrategy;
 import domain.core.DaysLateStrategy;
@@ -531,7 +526,6 @@ class DegradingFineStrategyTest {
       assertEquals(1000 + 900 + 810 + 729 + 656, strategy.calculateFine(5));
    }
 }
-
 ```
 
 For now, we must add a line to the MaterialType class to accommodate the new category:
@@ -596,6 +590,7 @@ Our new fine strategy took less than 20 minutes to test-drive&mdash;we created b
 
 ---
 
+[ I need to review the following few paragraphs, these appear to be pre-Thanksgiving "leftovers" ]
 
 A class always has two facets: an interface that declares the behaviors it supports, and a set of implementation specifics that provide the logic for those behaviors. Some languages, like Java or C#, provide direct means to declare the interface separately as a purely abstract concept. Regardless, the idea exists ... xxx
 
@@ -603,34 +598,36 @@ The abstract concept of an interface--a set of functions and the arguments requi
 
 The interface segregation principle (ISP) states that "a client should not be forced to implement interfaces it does not use." That's stating a principle in terms of the potential negative impact if ignored--a changing interface requires clients to expend effort to accommodate the change (minimally, by ensuring none of their interests have broken). But another way to look at the ISP is that it's a restatement of the SRP: An interface should have one reason to change.
 
-
 The simple answer is: delegate! If a behavior has any real complexity, consider moving it into another class.
 
 An ideally-defined SRP compliant class should be an entry point into a series of behaviors, each delegating to another class that implements the gory details.
 
+[ end possible leftovers]
 
+---
 
 ## Enter AI
 
 We (humans) are and have been advancing by orders of magnitude, technologically, every 5-10 years or so for the past 90 years. AI will continue that amazing trend, accelerating us toward the singularity by the 2024s. We are just "hitting the steep part of the curve." [need exact Kurzweill quote/ref here]
 
-Today, we can ask an LLM to produce code at the class level, and it will do an OK job, maybe getting 80% of the code correct. (There's that good old 80/20 rule again[ref].) We can help an LLM to a better job by:
+Today, we can ask an LLM to produce code at the class level, and it will do an OK job, maybe getting 80% of the code correct. (There's that good old 80/20 rule again[^fn-pareto].) We can help an LLM to a better job by:
 
 * providing it with examples
-* providing it with a simple style that tells it to:
-  a) produce small, single-purpose modules/classes and small, single-purpose functions/methods
-  b) produce more-functional solutions with less state management and side effects
-  c) emphasize clarity
+* providing it with a simple style that tells it to (a) produce small, single-purpose modules/classes and small, single-purpose functions/methods, (b) produce more-functional solutions with less state management and side effects, and (c) emphasize clarity
 
-What's cool is that this simple style matches how we've been told to code all along. It's also the style that has the most robust amount of effort behind its derivation.[meh, writing] We have concepts like SOLID and an exhaustively-examined body of work in design patterns; these things have been around for decades now.
+[^fn-pareto]: https://www.investopedia.com/terms/1/80-20-rule.asp
+
+What's cool is that this simple style matches how we've been told to code all along. It's also the style that has the broadest support, with few serious detractors. We have concepts like SOLID and an exhaustively-examined body of work in design patterns; these things have been around for decades now.
 
 ### It Will Be Wrong
 
-Unfortunately, we cannot trust that an LLM will get 100% of the code correct. The easy solution is to have it generate tests from the examples provide, then vet the tests for fidelity with our examples, then run them.[reference to AADV here]
+Unfortunately, we cannot trust that an LLM will get 100% of the code correct. The easy solution is to have it generate tests from the examples provide, then vet the tests for fidelity with our examples, then run them.
 
 In fact, *comprehensive testing for behavioral intent is **essential** when using AI*. AI will quickly generate more code than has been produced by humans to this point in history. It should create fear in everyone that 20% of that code is likely to be defective.
 
-When the AI gets the code wrong&mdash;it will&mdash;we need to have a conversation with it. That conversation is far more effective with a clean design: The source of the problem will be easier to pinpoint, and the resolution can involve focusing on that one small class or method. (If it's a method, sometimes the best route is to have the AI extract what's know as a "method object"&mdash;a new class that embodies the single troubled method. [reference Feathers WELC here])
+When the AI gets the code wrong&mdash;it will&mdash;we need to have a conversation with it. That conversation is far more effective with a clean design: The source of the problem will be easier to pinpoint, and the resolution can involve focusing on that one small class or method. (If it's a method, sometimes the best route is to have the AI extract what's know as a "method object"&mdash;a new class that embodies the single troubled method[^fn-welc].)
+
+[^fn-welc]: Feathers, Michael. Working Effectively With Legacy Code. https://www.amazon.com/Working-Effectively-Legacy-Michael-Feathers/dp/0131177052
 
 While the current trend is to view AI as most-useful as a line-by-line coding assistant, it's already at the point where it's more effective to have it produce code at a modular level. At this point, the code content of the module matters far less. Need to change a class? Pull up the list of examples, update them, and regenerate both the tests and production code. That's not so easy if the modules aren't SRP-compliant.
 
