@@ -1,6 +1,8 @@
 # Continuous Design
 
-Product owners (and others responsible for helping define a software product) determine the set of end goals that a system must accomplish for its users. Developers in turn build support for each of these goals in the system, in the form of code and configuration. As Jack W. Reeves taught us over three decades ago, this code (and configuration[^fn-config]) is the ultimate and definitive representation of "the design."  [REFERENCE here]
+Product owners (and others responsible for helping define a software product) determine the set of end goals that a system must accomplish for its users. Developers in turn build support for each of these goals in the system, in the form of code and configuration. As Jack W. Reeves taught us over three decades ago, this code (and configuration[^fn-config]) is the ultimate and definitive representation of "the design."
+
+reference: https://www.developerdotstar.com/mag/articles/reeves_design.html
 
 [^fn-config]: Configuration, which can of course be in the form of code itself, is usually also a critical piece of the design, but let's make it simpler by talking only about code here on out.
 
@@ -9,9 +11,9 @@ The word *design* classically has two primary meanings:
 * The plan for building something.
 * The form and functionality exuded by the current state of that something.
 
-Continuous Design, also abbreviated as... Wait, that abbreviation is already taken. Oh well; we'll refer to it as continuous design, and ultimately just "design"&mdash;because this is how we build systems.
+Continuous Design, also abbreviated as... Wait, that abbreviation is already taken. Oh well; we'll just utter the entire phrase, "continuous design," as we go. Ultimately we'll just call it "design," because this is how we build systems: One design decision after another.
 
-As we were saying: Continuous design means that we are continually planning how to accommodate new features. Most of that planning occurs just as we're writing the code that actually provides the new behaviors. Adding the new code, or updating the existing code, always changes the design, often only in a very small way.
+As we were saying: Continuous design means that we are continually planning how to accommodate new behaviors, and our system has a new design each time we add a new behavior. Most of that planning occurs just as we're writing the code that actually provides the new behaviors. Adding the new code, or updating the existing code, always changes the design, often only in a very small way.
 
 Design is not a nebulous phase of development that occurs at the outset of a project. It is not solely the activity of drawing high-level sketches about what the system needs to look like.
 
@@ -152,13 +154,13 @@ Crafting code with high clarity demonstrates that we care enough about our teamm
 
 As developers, we're good about getting things to work&mdash;our #1 job. We need to also remind ourselves that we're writers as well, and that others must consume what we write. Once we get our ideas onto paper, good writing demands that we revisit our spewage, and edit it to emphasize clarity.
 
-The sad fact is that we're *not* typically taught to edit our code. The vast majority of code out there shows it, and wastes copious amounts of your time as a result. [reference BOB's COMMENT ABOUT WTF's] "WTF is this code doing?"
+The sad fact is that we're *not* typically taught to edit our code. The vast majority of code out there shows it, and wastes copious amounts of your time as a result. WTFs per minute are high.
 
 In fact, we're often told expressly *not* to edit code. "If it ain't broke, don't fix it." There's that lame, misleading mantra again. If other people can't make quick sense of your code, it *is* broken. If you picked up a poorly-written book, one that required you to re-read sentences and paragraphs, you'd consider it a bad, broken book (we bet you had at least one of these at university).
 
 The mantra exists because we fear breaking things. Yes, code is a brittle material. It's pretty easy to make a dumb coding mistake in just about any programming language and not even spot it. As a result, we're inclined to avoid cleaning things up, despite how easy it usually is.
 
-Fearing making changes to our code is a quality smell. There are simple paths to creating the controls needed to know, with every tiny change, whether or not we've broken already-working logic. Visit [REF] on test-driven development to learn how.
+Fearing making changes to our code is a quality smell. There are simple paths to creating the controls needed to know, with every tiny change, whether or not we've broken already-working logic. Visit [REF elsewhere in book] on test-driven development to learn how.
 
 ## Quick Steps to Clarity
 
@@ -272,7 +274,7 @@ const mostExpensiveHighlyRatedBookInEachCategory = (books) => {
 
 Hmm. The updated solution contains an idiomatic expression: `.slice(0, 1)` returns the first element of an array (less idiomatic) or an empty array if the array is empty (yes idiomatic). We don't eliminate our idioms unless they're causing readers to come to a grinding halt. If so, we find a way to abstract them. (Here, we might create a `firstOrDefault` function to supplant the `slice` call.)
 
-Note that as we extract functions, we find misplaced logic. Typical. A couple functions here might find more appropriate homes in a `book` module. [REF cohesion]
+Note that as we extract functions, we find insufficient cohesion in the form of misplaced bits of logic. Typical. A couple functions extracted from this example's pipeline here might find more appropriate homes in a `book` module.
 
 # Conciseness
 
@@ -285,49 +287,49 @@ Let's start with an opposite examples however&mdash;code that's clear but not co
 ```
 // This function generates a random integer from 0 to n-1
 export const randomInt = n => {
-    const randomValue = Math.random(); // Generate a random decimal
-    const scaledValue = randomValue * n; // Scale the decimal to the desired range
-    const flooredValue = Math.floor(scaledValue); // Floor the value to get an integer
-    return flooredValue;
+  const randomValue = Math.random(); // Generate a random decimal
+  const scaledValue = randomValue * n; // Scale the decimal to the desired range
+  const flooredValue = Math.floor(scaledValue); // Floor the value to get an integer
+  return flooredValue;
 }
 
 // This function returns a word in its plural form if needed
 const pluralizeIf = (word, isPlural) => {
-    if (isPlural) {
-        return `${word}s`; // Append 's' to make the word plural
-    } else {
-        return word; // Return the original word if not plural
-    }
+  if (isPlural) {
+      return `${word}s`; // Append 's' to make the word plural
+  } else {
+      return word; // Return the original word if not plural
+  }
 }
 
 // This function generates a prompt text for a language card game
 const generateCard = (adjectives, nouns) => {
-    // Select a random adjective and noun from the provided lists
-    const randomAdjectiveIndex = randomInt(adjectives.length);
-    const randomNounIndex = randomInt(nouns.length);
-    const adjective = adjectives[randomAdjectiveIndex];
-    const noun = nouns[randomNounIndex];
+  // Select a random adjective and noun from the provided lists
+  const randomAdjectiveIndex = randomInt(adjectives.length);
+  const randomNounIndex = randomInt(nouns.length);
+  const adjective = adjectives[randomAdjectiveIndex];
+  const noun = nouns[randomNounIndex];
 
-    // Determine the case and number randomly
-    const nominativeOrAccusative = randomInt(2) === 0 ? 'nominative' : 'accusative';
-    const isPlural = randomInt(2) === 0;
-    const singularOrPlural = isPlural ? 'plural' : 'singular';
+  // Determine the case and number randomly
+  const nominativeOrAccusative = randomInt(2) === 0 ? 'nominative' : 'accusative';
+  const isPlural = randomInt(2) === 0;
+  const singularOrPlural = isPlural ? 'plural' : 'singular';
 
-    // Get the correct forms of the noun and adjective based on case and number
-    const correctNoun = noun[singularOrPlural][nominativeOrAccusative];
-    const nounGender = noun.gender.toLowerCase();
-    const correctAdjective = adjective[nominativeOrAccusative][singularOrPlural][nounGender];
+  // Get the correct forms of the noun and adjective based on case and number
+  const correctNoun = noun[singularOrPlural][nominativeOrAccusative];
+  const nounGender = noun.gender.toLowerCase();
+  const correctAdjective = adjective[nominativeOrAccusative][singularOrPlural][nounGender];
 
-    // Construct the prompt text for the game card
-    const promptText = `Adjective: ${adjective.word}
+  // Construct the prompt text for the game card
+  const promptText = `Adjective: ${adjective.word}
 Noun: ${noun.word}
 
 Determine the ${singularOrPlural} ${nominativeOrAccusative} case.
 
 Correct answer: ${correctAdjective} ${correctNoun}`;
 
-    // Return the constructed prompt
-    return promptText;
+  // Return the constructed prompt
+  return promptText;
 }
 ```
 
@@ -359,8 +361,7 @@ const formatCard = (adjective, noun, number, grammaticalCase, correctAdjective, 
   
   Provide the ${number} ${grammaticalCase} case.
   
-  Correct answer: ${correctAdjective} ${correctNoun}
-`
+  Correct answer: ${correctAdjective} ${correctNoun}`
 
 const generateCard = (adjectives, nouns) => {
   const { adjective, noun, grammaticalCase, number } = generateRandomCardData(adjectives, nouns)
@@ -379,7 +380,7 @@ Clarity is increased in a few ways. Distilling `generateCard` into three top-lev
 
 We can immediately understand and trust each supporting function or piece of data in this solution. It's also likely that we don't even need to looked at most of the code most of the time. The separate functions enhance clarity by allowing us to focus on small, understandable chunks. And while it would help to see the data structures involved (individual `noun` and `adjective` objects specifically), every statement otherwise stands on its own. No statements demand a comment. Comments would only increase the development, comprehension, and maintenance costs for this code.
 
-As for understanding the data structures, that's what unit tests are for, albeit we might make a case for extracting a couple functions to get just an ounce more isolation from implementation specifics in `generateCard`: [REF]
+As for understanding the data structures, that's what unit tests are for, albeit we might make a case for extracting a couple functions to get just an ounce more isolation from implementation specifics in `generateCard`:
 
 ```
 const generateCard = (adjectives, nouns) => {
@@ -392,7 +393,7 @@ const generateCard = (adjectives, nouns) => {
 }
 ```
 
-We also spotted opportunities to emphasize cohesive elements, by introducing a new abstraction&mdash;the notion of an object that captures the underlying data elements of a random card. Yet there's still something amiss with our function&mdash;the excessive number of parameters returned and passed about not only muddles the function, but also decreases its concision.
+We also spotted opportunities to cohere seemingly disparate elements, by introducing a new abstraction&mdash;the notion of an object that captures the underlying data elements of a random card. Yet there's still something amiss with our function&mdash;the excessive number of parameters returned and passed about not only muddles the function, but also decreases its concision.
 
 Let's make a final cleanup pass.
 
@@ -407,8 +408,7 @@ const formatCard = (phrase, caseAgreement, correctAdjective, correctNoun) =>
   
   Provide the ${caseAgreement.number} ${caseAgreement.grammaticalCase} case.
   
-  Correct answer: ${correctAdjective} ${correctNoun}
-`
+  Correct answer: ${correctAdjective} ${correctNoun}`
 
 const selectNoun = (noun, caseAgreement) =>
   noun[caseAgreement.number][caseAgreement.grammaticalCase]
@@ -489,7 +489,7 @@ export const postItem = (request, response) => {
 }
 ```
 
-Often, eliminating duplication involves replacing concrete details with abstractions. It's generally a win-win-win-win situation (increased conciseness, clarity, ease of confirmability, and a springboard to increased cohesion), but we don't go overboard by obsessing over two lines of code that happen to look the same. We seek to find and eradicate duplicate implementations of concepts, not incidentally common lines of code.
+Often, eliminating duplication involves replacing concrete details with abstractions. It's generally a win-win-win-win situation (increased conciseness, clarity, and ease of confirmability, plus a springboard to increased cohesion), but we don't go overboard by obsessing over two lines of code that happen to look the same. We seek to find and eradicate duplicate implementations of concepts, not incidentally common lines of code.
 
 Duplication fosters many increases in cost/effort:
 
@@ -600,7 +600,6 @@ We could dedicate an entire book to clutter in code. Most of it, however, you'll
 Our continuous design journey requires that we know what our code is intended to do. Without that knowledge, any change is unsafe. A system may contain many thousands of behavioral units. An unnoticed change in behavior to any one of them can allow us to unleash a costly defect in production.
 
 Fortunately, we can write thousands of small unit tests that verify whether we've created any regressions. These tests can tell us within seconds the moment we broke something. We'll need other kinds of tests at higher levels, of course, such as end-to-end functional tests, performance tests, load tests, and contract tests. But if we want to move fast, we need to be able to rapidly create and manage tests around the unit implementations.
-
 
 ## Fear Degrades Design
 
@@ -1118,11 +1117,11 @@ export const get = word => data[word]
 export const allValues = () => Object.values(data)
 ```
 
-# When Else do We Design?
+# When Else Do We Design?
 
 With a continuous design mentality, we seek to keep costs low by reviewing our code's adherence to the four C's, a collection of code criteria that we can continuously consult. When do we do that? Why, continuously of course, or at least continually.
 
-But design isn't only a consideration for when we're writing production code. It's a... um... continuous effort throughout the lifetime of our projects and products.
+But we don't only consider design when we're writing production code. It's a part of every virtually step of software development.
 
 ## Up-Front Design
 
@@ -1132,9 +1131,11 @@ As part of answering our analysis and design efforts, we might first produce sum
 
 Stakeholders usually want to know when the project will be done at this point in the planning process. Estimates are a design consideration: Not only must we have a sense of how much time it would take to develop a new feature, we must know the extent to which the current design resists the new feature. Ideally that amount is "zero," which can be true if we've adhered to the four C's well enough.
 
-The estimates themselves might feed back into the project plan. The powers that be may decide to remove or trim new needs due to unexpectedly high estimates. Given the updates to the desired scope, we reconsider the design and provide updated estimates for the stakeholders.
+The estimates themselves might feed back into the project plan. The powers that be may decide to trim their wishlist due to unexpectedly high estimates. Given these changes to their desired scope, we reconsider the design and provide updated estimates.
 
-Our project estimates at this time are high-level, involving larger initiatives that might take weeks or months to complete. As we ready for development, we seek to slice these larger challenges ("epics," as some refer to them) into thinner pieces of work that we can start and deliver within shorter periods of time. An understanding of the system's design is once again required at this point, to ensure our ideals for slicing work align with the realities of the system.
+Our project estimates at this time cover larger initiatives that might take weeks or months to complete. The estimates are high-level as a result; we invest enough time in them to get a ballpark sense of the initiative. We might use relative sizes&mdash;small, medium, large, extra-large&mdash;to figure out which ones we can guarantee we'll deliver in the next quarter.
+
+As we ready for development, we seek to slice these larger challenges into thinner pieces of work that we can start and deliver within shorter periods of time (perhaps hours or days). An understanding of the system's design is once again required at this point, to ensure our ideals for slicing work align with the realities of the system.
 
 ## Readying for Work
 
@@ -1167,23 +1168,3 @@ We write tests to drive in each unit behavior. A unit test describes the behavio
 For each test we write, we code the behavior that we hope realizes the need specified in the test. We run our tests, correcting the code (i.e. the design) until the tests pass. We revisit the coded behavior, and edit it for clarity, conciseness, and cohesion before moving onto the next test.
 
 Design is omnipresent.
-
-##  Confirmability
-
-
-
-=====
-
-Within a function, we (generally) can't name our statements or expressions, though we can certainly group them in a manner that allows the function itself to describe its intent.
-
-Software is unlike most other human-crafted products, in that its design can continue to change
-
-## Speculative Design
-
-These bigger goals (e.g., "show me a random list of flashcards for )
-
-Our software itself&mdash;the code and other specifics of a system's implementation.
-
-programming is fundamentally a design activity and that the only final and true representation of “the design” is the source code itself
-
-namely that programming is fundamentally a design activity and that the only final and true representation of “the design” is the source code itselfnamely that programming is fundamentally a design activity and that the only final and true representation of “the design” is the source code itself
