@@ -1,17 +1,27 @@
 # Continuous Design
 
-Product owners (and others responsible for helping define a software product) determine the set of end goals that a system must accomplish for its users. Developers in turn build support for each of these goals in the system, in the form of code and configuration. As Jack W. Reeves taught us over three decades ago, this code is the ultimate and definitive representation of "the design." (Configuration,which can of course be in the form of code itself, is usually also a critical piece of the design, but let's make it simpler by talking only about code here on out.) [REFERENCE here]
+Product owners (and others responsible for helping define a software product) determine the set of end goals that a system must accomplish for its users. Developers in turn build support for each of these goals in the system, in the form of code and configuration. As Jack W. Reeves taught us over three decades ago, this code (and configuration[^fn-config]) is the ultimate and definitive representation of "the design."  [REFERENCE here]
 
-The word *design* has two primary meanings:
+[^fn-config]: Configuration, which can of course be in the form of code itself, is usually also a critical piece of the design, but let's make it simpler by talking only about code here on out.
+
+The word *design* classically has two primary meanings:
 
 * The plan for building something.
 * The form and functionality exuded by the current state of that something.
 
-Software is made of code, but maybe it's more useful to say that software is made of thousands of small *behaviors*, each implemented in the form of code. These behaviors interact in a way that supports meeting the end goals of a system's users.
+Continuous Design, also abbreviated as... Wait, that abbreviation is already taken. Oh well; we'll refer to it as continuous design, and ultimately just "design"&mdash;because this is how we build systems.
+
+As we were saying: Continuous design means that we are continually planning how to accommodate new features. Most of that planning occurs just as we're writing the code that actually provides the new behaviors. Adding the new code, or updating the existing code, always changes the design, often only in a very small way.
+
+Design is not a nebulous phase of development that occurs at the outset of a project. It is not solely the activity of drawing high-level sketches about what the system needs to look like.
+
+Design is a continuous activity. Our system's design should command our constant attention, because it changes continuously, by definition. Sounds daunting, but in reality it's easier than the alternative of ignoring it.
 
 ## Continuous Change
 
-We can usually decompose end goals into a number of smaller behaviors, and sometimes in numerous ways. Given the goal "present a random list of flashcards for learning Czech nouns," we might implement the following sequence of behaviors:
+Software is made of code, but maybe it's more useful to say that software is made of thousands of small *behaviors* (sometimes called *units*), each implemented in the form of code. These behaviors interact in a way that supports meeting the end goals of a system's users.
+
+As developers, our job is to translate end goals into a number of smaller software behaviors. Given the goal "present a random list of flashcards for learning Czech nouns," we might implement the following sequence of behaviors:
 
 * retrieve a random subset of all nouns
 * for each noun:
@@ -20,29 +30,29 @@ We can usually decompose end goals into a number of smaller behaviors, and somet
   * show the user the correct answer if their choice is incorrect
 * repeat the prior three steps for each question that the user chose incorrectly
 
-We might also take alternate approaches. For example, the user might be able to continue selecting an answer for a single question until they get it correct; we might also present hints with each failed answer. We might also move from multiple choice to requiring a user to type in the actual noun form, for questions that the users gets correct.
+There are usually many ways to skin a cat, so we might instead support an alternate set of steps. For example, the user might be able to continue selecting an answer for a single question until they get it correct. We might present hints with each failed answer. We might replace multiple choice questions with fill-in-the blank questions as the user improves in skill.
 
-If there are many design choices for an application itself, we have orders of magnitude more choices for how we write the underlying code. No, that's not right. We have infinite choices. Most of those choices will be suboptimal.
+If there are many design choices for an application itself, there are orders of magnitude more choices for how we write the underlying code. No, that's not right. We have infinite design choices. Most of those choices will be suboptimal.
 
 The job of our product folks is to keep shaping the product to meet the perceived needs of its marketplace of users. Most software product continues to demand constant change in the form of new needs and variants on or enhancements to existing needs.
 
-In turn, we are constantly reacting to such changes by shaping existing software. Code is reasonably unique: It must not only continuously present a design that demonstrates all current needs to date, but it must also accept that this design will need to be different tomorrow.
+In turn, we must constantly be able to meet the demand by shaping and enhancing existing software. Code is reasonably unique: It must not only continuously present a design that demonstrates all current needs to date, but it must also accept that this design will need to be different tomorrow.
 
 We might be able to build a slick, useful flashcard system in a short period of time, perhaps a month or two. After an initial release, users will demand new behaviors. We're selling new features, great! But we must also continuously return to the current system's inherent design&mdash;its codebase&mdash. In order to add new features, we're forced to figure out how to accommodate new concepts into the existing design, things that might have never been considered before.
 
 ## Continuous Design
 
-When it comes to making choices in software, we have only a few kinds of primary building blocks: modules (classes), functions (methods), data references (variables), and statements/expressions. The first three of these materials can be named, thus providing us humans quick means of understanding where and what things are in the codebase.
+When it comes to making choices in software, we have only a few kinds of primary building blocks: modules (classes), functions (methods), data references (variables), and statements/expressions. The first three of these materials can be named, thus giving us humans a better chance of understanding where and what things are in the codebase.
 
-How we choose to manage and organize these building materials when coding behaviors is software design. Put another way, our system's design is the collection of choices we've made to this point in time.
+How we choose to manage and organize these building materials when coding behaviors is software design. *Our system's design is the collection of choices we've made to this point in time.*
 
 It is easily possible to make many bad choices when assembling these building materials, and in a very short matter of time to boot. Our flashcard app might still work, but at what cost to future change?
 
 If our flashcard app's code is convoluted, poorly organized, with opaque names for its elements, accommodating new needs will be slow. We'll expend too much time navigating code to find all the places it must change. Once we find those locations (usually plural), we'll expend too much time understanding what the current code does. We'll then expend too much time carefully inserting our changes and ensuring that all the existing behaviors remain unbroken.
 
-Each design choice we make impacts the cost for future choices. We succeed only if we consider the design impact of each choice. We refer to this critical concept as *continuous design*.
+Each design choice we make impacts the cost for future choices. We succeed only if we consider the design impact of each choice. This is the critical concept known as continuous design.
 
-## Sailing on the Four C's of Clean Code
+## Sailing on the Four C's of Continuous Design
 
 An Unclean Code© system makes it harder to:
 
@@ -57,20 +67,22 @@ We have many design perspectives to help guide us toward a Clean Code system. As
 
 We'll try, as many before, to codify it all in a simple, hopefully memorable set of rules. Consider this YADP&mdash;Yet Another Design Perspective.
 
-Our four design considerations are:
+Our four C's design considerations are:
 
-* clarity: The programmer's intents in the system are all clearly stated.
-* concision: The programmer's intents in the system are implemented in a minimal amount of code.
-* cohesiveness: Each module in the system has a high level of cohesion&mdash;all its elements maximally relate to one another.
-* confirmability: All behaviors in the system can be easily tested, in a way that also provides "living documentation" of these capabilities to its developers.
+* Clarity: The programmer's intents in the system are all clearly stated.
+* Concision: The programmer's intents in the system are implemented in a minimal amount of code.
+* Cohesiveness: Each module in the system has a high level of cohesion&mdash;all its elements maximally relate to one another.
+* Confirmability: All unit behaviors in the system can be easily tested, in a way that also provides "living documentation" of the behavioral choices that were made.
+
+These considerations don't live in isolation. We'll talk about each; note how they can both support and opposie each other as we discuss.
 
 # Clarity
 
 Getting code working is always our first step. We're challenged to add a small new piece of behavior to the code. We think about how we want to solve the problem for a small amount of time, then quickly splash some code into our editor. We whittle the code a bit until we finally manage to get it working, then move on to the next slice of logic needed.
 
-If we never had to read that code again, we might consider ourselves "done." Code complete, it ain't broke, and so we ain't gonna try'n fix what's already working. Why risk breaking things?
+If we never had to read that code again, we might consider ourselves "done." Code complete, it ain't broke, and so we ain't gonna try 'n fix what's already working. Why risk breaking things?
 
-The reality, however, is that we *will* have to read that code again when we're later required to change nuances of the logic we just coded. Or when we're asked "what does that code do in *this* case?" Or when we're required to add new behaviors that belong in the same module. Or in a half hour when we have to return to the code because it's not quite done yet.
+The reality, however, is that we *will* have to read that code again when we're later required to change nuances of the logic. Or when we're asked "what does that code do in *this* case?" Or when we're required to add new behaviors that belong in the same module. Or in a half hour when we have to return to the code because it's not quite done yet.
 
 For each of these needs, we want the code to be as clearly stated as possible. Anything unclear becomes a time suck.
 
@@ -130,37 +142,30 @@ If we're tasked with making changes to `retrieveWords`, understanding its overal
 * either the text "word" or "words," depending on the size of the `words` array
 * a joined string of the quoted words in that array.
 
-We then retrieve a response as a result of sending a larger prompt string. Finally, we slice out the JSON text from the response string, then parse it.
+We then send a larger prompt string to an LLM, receiving a text response. Finally, we slice out the JSON text from the response string (which exists because we sent the LLM a desired format as part of the prompt), then parse it.
 
-We can understand such a function in about 15 seconds; it is largely a statement of policy. The extracted functions represent concepts with enough semantic meaning imparted in their names. Each extracted function is implemented in one to three lines of code. If we needn't change any of those implementations, that's one to three lines of hidden detail we can ignore for now and maybe forever. If we do need to change a function, the streamlined policy declaration allows us to find it quickly, focus on a tiny bit of implementation detail, and get out without considering or changing any other code.
+We can understand such a function in about 15 seconds; it is largely a statement of policy. It uses extracted functions with names that capture their intent. Each extracted function is implemented in one to three lines of code. If we needn't change any of those implementations, that's one to three lines of hidden detail we can ignore for now and maybe forever. If we do need to change a function, the streamlined policy declaration allows us to find it quickly, focus on a tiny bit of implementation detail, and get out without considering or changing any other code.
 
 ## Editing Our Code
 
-Crafting code with high clarity demonstrates that you care enough about your teammates, and yourself, to spend a few moments to edit your code before moving on.
+Crafting code with high clarity demonstrates that we care enough about our teammates (and ourselves) to spend a few moments editing our code before moving on.
 
-As developers, we're good about getting things to work&mdash;our #1 job. We need to also remind ourselves that we're writers as well. Once we get our ideas onto paper, good writing demands that we revisit our spewage, and edit it to emphasize clarity.
+As developers, we're good about getting things to work&mdash;our #1 job. We need to also remind ourselves that we're writers as well, and that others must consume what we write. Once we get our ideas onto paper, good writing demands that we revisit our spewage, and edit it to emphasize clarity.
 
-The sad fact is that we're *not* typically taught to edit our code. The vast majority of code out there shows it, and wastes copious amounts of your time as a result. [BOB's COMMENT ABOUT WTF's] "WTF is this code doing?"
+The sad fact is that we're *not* typically taught to edit our code. The vast majority of code out there shows it, and wastes copious amounts of your time as a result. [reference BOB's COMMENT ABOUT WTF's] "WTF is this code doing?"
 
-In fact, we're often told expressly *not* to edit code. "If it ain't broke, don't fix it." There's that lame, misleading mantra again. If other people can't make quick sense of your code, it *is* broken. If you picked up a poorly-written book, one that required you to re-read sentences and paragraphs just to make sense it, you'd consider it a bad book (we bet you had at least one of these at university). Maybe we should institute a review system for code.
+In fact, we're often told expressly *not* to edit code. "If it ain't broke, don't fix it." There's that lame, misleading mantra again. If other people can't make quick sense of your code, it *is* broken. If you picked up a poorly-written book, one that required you to re-read sentences and paragraphs, you'd consider it a bad, broken book (we bet you had at least one of these at university).
 
-The mantra exists because we fear breaking things. Yes, code is a brittle material. It's pretty easy to make a dumb code mistake in just about any programming language and not even spot it. As a result, we're inclined to avoid cleaning things up, despite how easy it usually is.
+The mantra exists because we fear breaking things. Yes, code is a brittle material. It's pretty easy to make a dumb coding mistake in just about any programming language and not even spot it. As a result, we're inclined to avoid cleaning things up, despite how easy it usually is.
 
-Fearing making changes to our code is a quality smell. There are simple paths to creating the controls needed to knowing, with every tiny change, whether or not we've broken already-working logic. Visit [REF] on test-driven development to learn how.
+Fearing making changes to our code is a quality smell. There are simple paths to creating the controls needed to know, with every tiny change, whether or not we've broken already-working logic. Visit [REF] on test-driven development to learn how.
 
 ## Quick Steps to Clarity
 
-* Extract implementation detail from multi-purpose functions into new functions with concise names
-* Move functions as appropriate to other modules and emphasize cohesion, so that readers find code where they might expect it
-* Replace comments with clear declarations
-* 
-
-clarity is:
-
-- no comments
-- scannability
-- finding things where you expect them
-- intention-revealing names [ not implementation-specific -- provide examples ]
+* Extract implementation detail from multipurpose functions into new functions with concise names
+* Move functions as appropriate to other modules. This results in increased cohesion, which helps readers find code where they might expect it. 
+* Replace comments with clear declarations.
+* Write tests that double as documentation on all behavioral intents coded into the system.
 
 ## Objections to Clarity
 
@@ -206,7 +211,7 @@ export const retrieveWords = async words => {
 
 ## Declare Intent, Don't Ooze Details
 
-We use functional pipelines not because they're newer and cooler, we do so because they replace detail with declaration:
+We use functional pipelines partly because they allow us to replace details with declarations:
 
 ```
 words.map(word => `"${word}"`).join(',')
@@ -269,16 +274,13 @@ Hmm. The updated solution contains an idiomatic expression: `.slice(0, 1)` retur
 
 Note that as we extract functions, we find misplaced logic. Typical. A couple functions here might find more appropriate homes in a `book` module. [REF cohesion]
 
-### editing
-
-
 # Conciseness
 
 A functional pipeline can provide code that is not only very clear, but also *concise*. Concise code requires the fewest possible tokens. Code that is maximally concise without consideration for clarity is *obfuscated*. The only legitimate time when we might deliberately obscure code is as part of a post-development deployment process (perhaps for compression or security interests), or as challenge/entertainment (see: https://www.ioccc.org).
 
-The absolute need for clarity means we must find a balance between conciseness and clarity. Finding the balance isn't tough, though: Lean on your teammates. They'll let you know the moment something doesn't make sense. Watch them read through your code, and it'll usually be obvious when they're struggling with your logic.
+The absolute need for clarity means we must find a balance between conciseness and clarity. Finding the balance isn't tough, though: Lean on your teammates. They'll let you know the moment something doesn't make sense. Watch them read through your code, and it'll usually be obvious when they're struggling with your ultra-optimized-logic.
 
-Let's start with opposite examples, however&mdash;code that's clear but not concise. The following `generateCard` function, along with a couple helper functions, assembles a text-based flashcard (complete with the answer on it, hm?).
+Let's start with an opposite examples however&mdash;code that's clear but not concise. The following `generateCard` function, along with a couple helper functions, assembles a text-based flashcard (complete with the answer on it, hm?).
 
 ```
 // This function generates a random integer from 0 to n-1
@@ -332,7 +334,8 @@ Correct answer: ${correctAdjective} ${correctNoun}`;
 The code appears typical to us. The core function, `generateCard`, is a top-to-bottom affair. It's not terribly long, but includes comments to guide readers through what's happening in the next few statements. Each of the function's statements uses clear variable names and is readily comprehensible. We can carefully read through the code statement-by-statement, mentally assembling groups of statements into unit behaviors. What's not to like?
 
 Indeed, the above example is how many developers happily continue coding for most of their career. But it's suboptimal for numerous reasons.
-A reworked version results in a few more small helper functions:
+
+A reworked version results in additional small helper functions:
 
 ```
 export const randomInt = n => Math.floor(Math.random() * n)
@@ -486,7 +489,7 @@ export const postItem = (request, response) => {
 }
 ```
 
-Most often, eliminating duplication is a matter of replacing concrete details with abstractions. It's generally a win-win-win-win situation (increased conciseness, clarity, ease of confirmability, and a springboard to increased cohesion), but we don't go overboard by obsessing over two lines of code that happen to look the same. We seek to find and eradicate duplicate implementations of concepts, not incidentally common lines of code.
+Often, eliminating duplication involves replacing concrete details with abstractions. It's generally a win-win-win-win situation (increased conciseness, clarity, ease of confirmability, and a springboard to increased cohesion), but we don't go overboard by obsessing over two lines of code that happen to look the same. We seek to find and eradicate duplicate implementations of concepts, not incidentally common lines of code.
 
 Duplication fosters many increases in cost/effort:
 
@@ -502,9 +505,9 @@ Duplication fosters many increases in cost/effort:
 
 We've worked on many systems that were two-to-three times as large as they might have been due to rampant code duplication. Oh, the days of getting paid by the line of code! (Just kidding. It never happened for any of us.)
 
-One example included an operating room scheduling system, which by definition needed to do a lot of work with dates. Among many other amusements, we found a common five-line piece of (old school) Java date handling logic. These five lines were repeated in over fifty places throughout the code. Add to our list of costs a dramatic increase in effort to replace one library with another.
+One example included an operating room scheduling system, which by definition needed to do a lot of work with dates and timestamps. Among many other amusements, we found a common five-line piece of (old school) Java date handling logic. These five lines were repeated in over fifty places throughout the code. Add to our list of costs a dramatic increase in effort to replace one library with another.
 
-Extract-and-move is once again our trustworthy workhorse for beginning to tackle duplication problems:
+Extract-and-move is once again our trustworthy workhorse for tackling duplication problems:
 
 * Identify a clump of implementation detail that represents a singular concept
 * Extract it to a function.
@@ -518,7 +521,9 @@ Every unnecessary token adds to the clutter of our code. We *can* and should oft
 
 #### Return Boolean Expressions
 
-Learning a language well not only means we learn its syntax, but that we also learn the most concise way of representing common concepts. Some of these streamlined constructs might go as far as to be classified as *idiomatic*. (Yes we've used that word a number of times; we guess we should finally define it.) Idiomatic code isn't obvious the first time you see it. A ternary operator isn't idiomatic: In an isolated context, it doesn't inherently provide all the information you need to decipher it. The second or third time you see it, however, you'll know how to interpret it. It's like riding a bicycle; you won't likely ever need to be reminded after that.
+Learning a language well not only means we learn its syntax, but that we also learn the most concise way of representing common concepts. Some of these streamlined constructs might go as far as to be classified as *idiomatic*. (Yes we've used that word a number of times; we guess we should finally define it: Idiomatic code isn't obvious the first time you see it.)
+
+A ternary operator isn't idiomatic: In an isolated context, it doesn't inherently provide all the information you need to decipher it. The second or third time you see it, however, you'll know how to interpret it&mdash;it has become obvious to you. It's like riding a bicycle; you won't likely ever need to be reminded after that.
 
 Sometimes we see anti-idioms:
 
@@ -532,7 +537,7 @@ const hasTitle = book => {
 }
 ```
 
-Anti-idiom? Despite the fact that this construct demands **five precious vertical source lines**, we usually digest it as a single chunk when we see it (because unfortunately we see it a lot). Sometimes we even spot that some chucklehead has reversed the order of the `true` and `false` returns.
+Anti-idiom? Despite the fact that this construct demands **five precious vertical source lines**, we usually digest it as a single chunk when we see it (because unfortunately we see it a lot). Sometimes we even notice when some chucklehead has sneakily reversed the order of the `true` and `false` returns.
 
 We rarely say that things are flat-out wrong in programming, but this is one of those cases.
 
@@ -578,7 +583,7 @@ const pluralizeIf = (word, isPlural) => {
 
 We write tests if we remain worried.
 
-In any case, there's honestly not much good reason to eschew a ternary in this case.
+In any case, there's honestly not much good reason to eschew a ternary for this example:
 
 ```
 const pluralizeIf = (word, isPlural) => isPlural ? `${word}s` : word
@@ -596,11 +601,11 @@ Our continuous design journey requires that we know what our code is intended to
 
 Fortunately, we can write thousands of small unit tests that verify whether we've created any regressions. These tests can tell us within seconds the moment we broke something. We'll need other kinds of tests at higher levels, of course, such as end-to-end functional tests, performance tests, load tests, and contract tests. But if we want to move fast, we need to be able to rapidly create and manage tests around the unit implementations.
 
-### Lack of Confirmability Degrades Design
+### Fear Degrades Design
 
-In contrast, the lack of such tests gradually slows us down. As the amount of (not unit tested) code increases, our costs to verify it increase. We can write integration tests, but they're generally costlier to build and maintain. They also create a slower feedback loop. Finally, it's unrealistic to expect that you'll be able to cover all the thousands of intentional decisions and logic variants that went into the codebase.
+In contrast, the lack of such tests gradually slows us down. As the amount of (not unit tested) code increases, our costs to verify it increase. We can only manually step through so many test cases. We can write integration tests, but they're generally costlier to build and maintain. They also create a slower feedback loop. Finally, it's unrealistic to expect that you'll be able to cover all the thousands of intentional decisions and logic variants that went into the codebase.
 
-Without fast feedback in the form of unit tests, we relegate ourselves to an "it ain't broke, don't fix it" mentality. Our codebase degrades by definition. We don't have the confidence to ensure the code remains cohesive, clear, and concise. Instead, we habitually slap out "first drafts" in our code: We get our code to work and immediately move onto the next thing without editing it.
+Without fast feedback in the form of unit tests, we relegate ourselves to that "it ain't broke, don't fix it" mentality. Our codebase degrades by definition. We don't have the confidence to ensure the code remains cohesive, clear, and concise. Instead, we habitually slap out "first drafts": We get our code working, then immediately move onto the next thing without making any edits.
 
 It seems fast at first, yet the results of fear-driven coding quickly become apparent in the codebase. Developers learn to do the worst possible thing to a system, rather than what they know to be the best thing for the system.
 
@@ -608,11 +613,11 @@ A real example from a high-performance, historically-famous large system: Develo
 
 As a result, developers habitually *replicated* (i.e. copy 'n' pasted) entire member functions, then made their changes within these copies. They didn't change the original functions&mdash;no one wanted to be the one who broke code that was already working. ("Why did you even touch that code?")
 
-By definition, then, the fear significantly increased code duplication and costs as a result.
+By definition, fear significantly increased code duplication and costs as a result.
 
 ## Conflated Units -> Tough Tests
 
-If we write code like the `postCheckoutTotal` function following, coming back and trying to figure out how to test it will be daunting:
+If we write code like the `postCheckoutTotal` function following, writing tests for it will be daunting:
 
 ```
 export const postCheckoutTotal = (request, response) => {
@@ -1127,6 +1132,8 @@ code written first:
 Cohesive code: small, single purpose modules easier to write tests for.
 
 Minimize the intertwining of stateful dependencies
+
+Tests: document all the choices
 
 
 
