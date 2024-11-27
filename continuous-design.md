@@ -601,7 +601,8 @@ Our continuous design journey requires that we know what our code is intended to
 
 Fortunately, we can write thousands of small unit tests that verify whether we've created any regressions. These tests can tell us within seconds the moment we broke something. We'll need other kinds of tests at higher levels, of course, such as end-to-end functional tests, performance tests, load tests, and contract tests. But if we want to move fast, we need to be able to rapidly create and manage tests around the unit implementations.
 
-### Fear Degrades Design
+
+## Fear Degrades Design
 
 In contrast, the lack of such tests gradually slows us down. As the amount of (not unit tested) code increases, our costs to verify it increase. We can only manually step through so many test cases. We can write integration tests, but they're generally costlier to build and maintain. They also create a slower feedback loop. Finally, it's unrealistic to expect that you'll be able to cover all the thousands of intentional decisions and logic variants that went into the codebase.
 
@@ -941,11 +942,26 @@ export const calculateTotal = checkout => {
 
 It looks like our refactoring increased the lines of code, for `calculateTotal` at least. However, the overall number of lines in the module decrease by a handful after we made similar changes to the other calculation functions as well.
 
+## When Should We Ensure Confirmability?
 
-## Dependencies and Testing
+Many developers prefer to write a significant chunk of code, then later come back and meet what they view as their obligation to meet code coverage mandates. The mandate for code coverage&mdash;the measure of what percent of code is exercised by tests&mdash;becomes a self-fulfilling prophecy: You get what you ask for. If a development team is told their coverage metric must be 75%, that's what you'll typically end up with.
 
-- interest in simpler testing promotes dependency minimization
+Seventy-five percent doesn't sound bad, until you state it differently: A quarter of your system has insufficient unit tests. It's also often the more complex parts of your system: They're harder to test, and when meeting a metric we don't really believe in, we'll do it in the most expeditious way we can imagine.
 
+As far as that "harder to test" bit, our code is overall harder to test because testing it wasn't a paramount concern while we were coding it. Our primary interest was to just get the damn thing working. As a result, the complex parts and even the not-so-complex parts are tougher to test. Our code is not easily confirmable.
+
+Writing tests after the fact is harder because the existing code:
+
+* Lacks clarity. It is overly complex, because it wasn't edited. It's tougher to figure out the basic question of what the functions do.
+* Lacks cohesion. It becomes increasingly difficult to discern all the actual developer intents, because they aren't all in one place, and they aren't decoupled from other intents.
+* Lacks conciseness. It contains excessive code, as well as excessively repeated constructs that must be retested in multiple contexts.
+* Contains deep dependency chains. As a result, tests demand increased effort to set up the appropriate data / context. The existence of what are typically private dependencies means that we must re-shape the code to allow tests to inject the dependencies.
+
+One more problem with that 75% or 80% or whatever code metric: The remaining portion of our code is a 20%+ blob of "who really knows what this stuff does." Good tests not only provide us with the ability to edit code without fear, they document all the developer intents.
+
+If writing tests later creates so many problems (or, more positively stated, doesn't help us sufficiently enough), the obvious answer is to start with tests. With each new behavior we must add, we write a test that captures that behavior. Our test's name summarizes that behavior (which helps us later find the behaviors we seek). Our test's code provides an example that pins down the design for how we effect that behavior.
+
+Our code coverage becomes a self-fulfilling prophecy: We get complete coverage on all the behaviors we needed and designed into the system. We get high confidence to continuously shape its design to be clear, cohesive, and concise. Our system is eminently confirmable.
 
 ## Cohesion
 
@@ -1153,20 +1169,6 @@ For each test we write, we code the behavior that we hope realizes the need spec
 Design is omnipresent.
 
 ##  Confirmability
-
-If we have a hard time writing a test, our code is not easily confirmable.
-
-code written first:
-- dense
-- much intertwining of concerns-- demands large setup of context/data
-- hard to piece out all the intents (tests written later)
-- private dependencies
-
-Cohesive code: small, single purpose modules easier to write tests for.
-
-Minimize the intertwining of stateful dependencies
-
-Tests: document all the choices
 
 
 
