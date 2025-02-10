@@ -1,0 +1,8 @@
+
+[ I need to review the following few paragraphs, these appear to be pre-Thanksgiving “leftovers” ]
+A class always has two facets: an interface that declares the behaviors it supports, and a set of implementation specifics that provide the logic for those behaviors. Some languages, like Java or C#, provide direct means to declare the interface separately as a purely abstract concept. Regardless, the idea exists … xxx
+The abstract concept of an interface–a set of functions and the arguments required for each–still always has two reasons to change: It needs to support or stop supporting behaviors, or how clients interfaces with those behaviors (function arguments and return values) changes.
+The interface segregation principle (ISP) states that “a client should not be forced to implement interfaces it does not use.” That’s stating a principle in terms of the potential negative impact if ignored–a changing interface requires clients to expend effort to accommodate the change (minimally, by ensuring none of their interests have broken). But another way to look at the ISP is that it’s a restatement of the SRP: An interface should have one reason to change.
+The simple answer is: delegate! If a behavior has any real complexity, consider moving it into another class.
+An ideally-defined SRP compliant class should be an entry point into a series of behaviors, each delegating to another class that implements the gory details.
+[ end possible leftovers]
